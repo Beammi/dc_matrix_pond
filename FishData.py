@@ -1,3 +1,4 @@
+import datetime
 import math
 import random
 
@@ -30,6 +31,18 @@ class FishData:
         self.pheromoneThresh = randPheromoneThresh()
         self.lifetime = 60
         self.parentId = parentId
+        self.x, self.y = random.randint(50, 650), random.randint(50, 650)
+        self.timestamp = datetime.datetime.now()
+
+    def has_time_passed(self, seconds: int) -> bool:
+        current_time = datetime.datetime.now()
+        time_diff = current_time - self.timestamp
+        print(f"elapsed: {time_diff.total_seconds()}")
+        print(f"lifetime: {seconds} id: {self.getId()}")
+        return time_diff.total_seconds() >= seconds
+
+    def get_remaining_lifetime(self):
+        pass
 
     def getId(self):
         return self.id
@@ -52,7 +65,7 @@ class FishData:
     def pheromoneThresh(self):
         return self.pheromoneThresh
 
-    def lifetime(self):
+    def getLifetime(self):
         return self.lifetime
 
     def parentId(self):

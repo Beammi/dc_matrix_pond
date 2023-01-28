@@ -35,7 +35,7 @@ class Client:
     def get_msg(self):
         while self.connected:
             time.sleep(0.5)
-            msg = pickle.loads(self.client.recv(MSG_SIZE))
+            msg: Payload = pickle.loads(self.client.recv(MSG_SIZE))
             if msg:
                 self.messageQ.append(msg)
                 self.handle_msg(msg)
@@ -45,7 +45,7 @@ class Client:
     def connect(self):
         try:
             self.client.connect(self.addr)
-            print(f"Client connected ")
+            print("Client connected ")
             return "Connected"
         except:
             print("Can not connect to the server")
@@ -96,8 +96,9 @@ class Client:
             self.payload.action = DISCONNECT_MSG
             print("Disconnecting...")
             self.client.send(pickle.dumps(self.payload))
-            return self.client.recv(MSG_SIZE)
-
+            #            res = self.client.recv(MSG_SIZE)
+            self.client.shutdown(socket.SHUT_RDWR)
+            self.client.close()
         except socket.error as e:
             print(e)
 
@@ -115,7 +116,7 @@ class Client:
 
             time.sleep(1)
 
-    def handle_msg(self, msg):
+    def handle_msg(self, msg: Payload):
         msg_action = msg.action
         msg_object = msg.data
 

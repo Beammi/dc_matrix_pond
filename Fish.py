@@ -33,9 +33,9 @@ load_sprites_left(LOCAL_POND_PATH, left_sprites)
 
 
 class Fish(pygame.sprite.Sprite):
-    def __init__(self, pos_x, pos_y, genesis="sick-salmon", parent=None):
+    def __init__(self, pos_x, pos_y, genesis="sick-salmon", parent=None, data=None):
         super().__init__()
-        self.fishData = FishData(genesis, parent)
+        self.fishData = FishData(genesis, parent) if not data else data
 
         # swimming controller
         self.direction = "RIGHT"
@@ -135,13 +135,15 @@ class Fish(pygame.sprite.Sprite):
     def getId(self):
         return self.fishData.id
 
+    def getLifetime(self):
+        return self.fishData.lifetime
+
     def isPregnant(self):
         return self.fishData.pheromone >= self.fishData.pheromoneThresh
 
     def updateLifeTime(self):
         self.in_pond_sec += 1
-        self.fishData.lifetime -= 1
-        if self.fishData.lifetime == 0:
+        if self.fishData.has_time_passed(self.fishData.lifetime):
             self.fishData.status = "dead"
 
     def resetPheromone(self):
@@ -155,3 +157,6 @@ class Fish(pygame.sprite.Sprite):
 
     def giveBirth(self):
         self.gaveBirth = True
+
+    def shouldMigrate(self) -> bool:
+        pass

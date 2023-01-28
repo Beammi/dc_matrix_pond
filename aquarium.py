@@ -1,5 +1,7 @@
 import os
 
+from FishStore import FishStore, connect_to_redis
+
 # from src.Fish import Fish
 from Pond import Pond
 
@@ -7,7 +9,9 @@ os.environ["SDL_VIDEO_WINDOW_POS"] = "%d,%d" % (1000, 290)
 
 
 if __name__ == "__main__":
-    pond = Pond()
+    r = connect_to_redis()
+    fishStore = FishStore(r)
+    pond = Pond(fishStore=fishStore)
     pond.run()
 
     # rest of your code here

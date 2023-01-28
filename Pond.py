@@ -25,16 +25,15 @@ from Client import Client
 # from run import Dashboard
 from dashboard import Dashboard
 from Fish import Fish
-from FishData import FishData
+from FishStore import FishStore
 from pondDashboard import PondDashboard
 from PondData import PondData
 
 
 class Pond:
-    def __init__(self):
+    def __init__(self, fishStore: FishStore):
         pygame.init()
         self.name = "sick-salmon"
-        self.fishes = {}
         self.moving_sprites = pygame.sprite.Group()
         self.sharkImage = pygame.image.load("./assets/images/sprites/shark.png")
         self.sharkImage = pygame.transform.scale(self.sharkImage, (128, 128))
@@ -43,11 +42,16 @@ class Pond:
         self.network = None
         self.sharkTime = 0
         self.displayShark = False
+        self.fishStore: FishStore = fishStore
 
         # EVENTS
         self.UPDATE_EVENT = pygame.USEREVENT + 1
-        self.PHEROMONE_EVENt = pygame.USEREVENT + 2
+        self.PHEROMONE_EVENT = pygame.USEREVENT + 2
         self.SHARK_EVENT = pygame.USEREVENT + 3
+
+        self.fishes = self.fishStore.get_fishes()
+        for fish in self.fishes.values():
+            self.moving_sprites.add(fish)
 
     def getPondData(self):
         return self.pondData
@@ -66,11 +70,12 @@ class Pond:
 
     def spawnFish(self, parentFish=None):
         tempFish = Fish(100, 100, self.name, parentFish.getId())
+        self.fishStore.add_fish(tempFish.fishData)
         self.fishes[tempFish.getId()] = tempFish
         self.moving_sprites.add(tempFish)
 
     def pheromoneCloud(self):
-        pheromone = randint(2, 20)
+        pheromone = 0
         # RuntimeError: dictionary changed size during iteration
         # need to use .items() instead of .values()
         for f in list(self.fishes.values()):
@@ -78,6 +83,7 @@ class Pond:
 
             if f.isPregnant():  ## check that pheromone >= pheromone threshold
                 newFish = Fish(50, randint(50, 650), f.getGenesis(), f.getId())
+                self.fishStore.add_fish(newFish.fishData)
                 print("CHILD FISH")
                 print("number of fishes:", len(self.fishes))
                 self.addFish(newFish)
@@ -104,16 +110,15 @@ class Pond:
     def addFish(self, newFishData):  # from another pond
         self.fishes[newFishData.getId()] = newFishData
         self.pondData.addFish(newFishData.fishData)
+        self.fishStore.add_fish(newFishData.fishData)
         self.moving_sprites.add(newFishData)
         self.network.pond = self.pondData
 
     def removeFish(self, fish):
         self.fishes.pop(fish.getId(), None)
         print("---------------------------FISH SHOULD BE REMOVED-------------------------")
-        fish = self.pondData.getFishById(fish.getId())
-        if fish:
-            print("---------------------------REMOVE FISH FROM POND DATA-------------------------")
-            self.pondData.removeFish(fish.getId())
+        print(fish.getId())
+        self.pondData.removeFish(fish.getId())
         self.network.pond = self.pondData
         self.moving_sprites.remove(fish)
 
@@ -122,17 +127,19 @@ class Pond:
             self.update_fish(fish)
         # self.pool.map(self.update_fish, self.fishes)
 
-    def update_fish(self, f, ind=2, injectPheromone=False):
+    def update_fish(self, f: Fish, ind=2, injectPheromone=False):
         f.updateLifeTime()  # decrease life time by 1 sec
         if f.fishData.status == "dead":
             self.removeFish(f)
             return
         self.pondData.setFish(f.fishData)
 
+        # Other pond exists
         if len(self.network.other_ponds.keys()) > 0:
             # print( f.getId(), f.in_pond_sec)
             if f.getGenesis() != self.name and f.in_pond_sec >= 5 and not f.gaveBirth:
                 newFish = Fish(50, randint(50, 650), f.fishData.genesis, f.fishData.id)
+                self.fishStore.add_fish(newFish.fishData)
                 newFish.giveBirth()  ## not allow baby fish to breed
                 print("ADD FISH MIGRATED IN POND FOR 5 SECS")
                 self.addFish(newFish)
@@ -217,7 +224,10 @@ class Pond:
         clock = pygame.time.Clock()
         start_time = pygame.time.get_ticks()
         pregnant_time = pygame.time.get_ticks()
-        self.addFish(Fish(10, 100))
+
+        begin_fish = Fish(10, 100)
+        self.addFish(begin_fish)
+        self.fishStore.add_fish(begin_fish.fishData)
 
         # self.addFish(Fish(10,140, genesis="peem"))
         # self.addFish(Fish(100,200, genesis="dang"))
@@ -227,11 +237,10 @@ class Pond:
 
         running = True
         pygame.time.set_timer(self.UPDATE_EVENT, 1000)
-        pygame.time.set_timer(self.PHEROMONE_EVENt, 5000)
+        pygame.time.set_timer(self.PHEROMONE_EVENT, 5000)
         pygame.time.set_timer(self.SHARK_EVENT, 15000)
 
         while running:
-
             #   if len(self.fishes) > 100000:
             #      while len(self.fishes) > 100000:
             #         self.removeFish(self.randomFish())
@@ -240,9 +249,13 @@ class Pond:
             # print(self.network.get_msg())
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
-                    self.network.disconnect()
+                    # cleanup
                     running = False
-                if event.type == pygame.KEYDOWN:
+                    pygame.time.set_timer(self.UPDATE_EVENT, 0)
+                    pygame.time.set_timer(self.PHEROMONE_EVENT, 0)
+                    pygame.time.set_timer(self.SHARK_EVENT, 0)
+                    self.network.disconnect()
+                elif event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_RIGHT:
                         # print(self.fishes[0].getId())
                         allPondsNum = len(self.fishes)
@@ -259,7 +272,7 @@ class Pond:
                         pond_handler.start()
                 elif event.type == self.UPDATE_EVENT:
                     self.update()
-                elif event.type == self.PHEROMONE_EVENt:
+                elif event.type == self.PHEROMONE_EVENT:
                     # pregnant_time?
                     self.pheromoneCloud()
                 elif event.type == self.SHARK_EVENT:
@@ -301,9 +314,6 @@ class Pond:
 
             self.moving_sprites.update(screen=screen)
 
-            time_since_enter = pygame.time.get_ticks() - start_time
-            time_since_new_birth = pygame.time.get_ticks() - pregnant_time
-
             # print(len(self.fishes))
 
             # if time_since_last_data_send > 2000:
@@ -312,3 +322,4 @@ class Pond:
             clock.tick(60)
 
         pygame.quit()
+        sys.exit()

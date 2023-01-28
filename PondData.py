@@ -28,4 +28,4 @@ class PondData:
         self.fishes[newFishData.id] = newFishData
 
     def removeFish(self, fishId):
-        del self.fishes[fishId]
+        self.fishes.pop(fishId, None)

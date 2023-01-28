@@ -1,9 +1,12 @@
 import pickle
-import sys
 import time
 from dataclasses import dataclass
+from typing import Dict, List
 
 import redis
+
+from Fish import Fish
+from FishData import FishData
 from logging_utils import get_logger
 
 
@@ -50,26 +53,31 @@ def connect_to_redis(
 
 # Fish transporter from/to redis
 class FishStore:
-    pass
+    def __init__(self, redis):
+        self.redis = redis
+
+    def add_fish(self, fish: FishData):
+        self.redis.set(fish.getId(), pickle.dumps(fish), ex=fish.getLifetime())
+
+    def remove_fish(self, fish_ids: List[str]):
+        self.redis.delete(*fish_ids)
+
+    # TODO: need to compare performance later
+    def remove_batch(self, fish_ids: List[str]):
+        pipe = self.redis.pipeline(transaction=False)
+        for key in fish_ids:
+            pipe.delete(key)
+
+    def get_fishes(self) -> Dict[str, Fish]:
+        fish_ids = self.redis.keys()
+        fishes_data = [
+            pickle.loads(data) for data in self.redis.mget(fish_ids) if data is not None
+        ]
+        fishes = [Fish(fish.x, fish.y, data=fish) for fish in fishes_data]
+        return dict(zip(fish_ids, fishes))
 
 
 # TODO: get address from env
-r = connect_to_redis()
-if not r:
-    log.critical("Failed to connect to redis")
-    sys.exit(1)
-
-
-r.set("foo", "bar", ex=10)  # 10 seconds TTL
-for key in r.scan_iter():
-    print(key)
-
-# test pickling
-obj = ExampleObject(name="What else is here?", unit_price=200.22)
-pickled_object = pickle.dumps(obj)
-r.set("some_key", pickled_object)
-unpacked_object = pickle.loads(r.get("some_key"))
-log.info(unpacked_object)
 
 # pubsub - remove expire (dead) fish
 def event_handler(msg):
@@ -80,7 +88,7 @@ def event_handler(msg):
         log.exception(f"pubsub handler error: {e}")
 
 
-r.config_set("notify-keyspace-events", "Ex")
-pubsub = r.pubsub()
-pubsub.psubscribe(**{"__keyevent@0__:expired": event_handler})
-pubsub.run_in_thread(sleep_time=0.01)
+# r.config_set("notify-keyspace-events", "Ex")
+# pubsub = r.pubsub()
+# pubsub.psubscribe(**{"__keyevent@0__:expired": event_handler})
+# pubsub.run_in_thread(sleep_time=0.01)
