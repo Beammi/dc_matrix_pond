@@ -75,7 +75,7 @@ class Pond:
         self.moving_sprites.add(tempFish)
 
     def pheromoneCloud(self):
-        pheromone = 0
+        pheromone = 20
         # RuntimeError: dictionary changed size during iteration
         # need to use .items() instead of .values()
         for f in list(self.fishes.values()):

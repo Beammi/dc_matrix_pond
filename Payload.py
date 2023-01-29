@@ -3,6 +3,6 @@ from PondData import PondData
 
 
 class Payload:
-    def __init__(self):
-        self.action = ""
-        self.data = object
+    def __init__(self, action="", data=object):
+        self.action = action
+        self.data = data
