@@ -36,7 +36,7 @@ class PondDashboard(QMainWindow):
         )  # The Vertical Box that contains the Horizontal Boxes of  labels and buttons
         self.grid = QGridLayout()
 
-        # temp = ["Fish ID: 123", "State: In Pond", "Status: alive", "Genesis: Sick-Salmon", "Crowd Threshold: 5/10", "Pheromone Level: 4/5", "Lifetime: 30/60"]
+        # temp = ["Fish ID: 123", "State: In Pond", "Status: alive", "Genesis: matrix-fish", "Crowd Threshold: 5/10", "Pheromone Level: 4/5", "Lifetime: 30/60"]
         # print(self.fishe[0].getFishData().getGenesis())
         # num = len(self.fished)
         num = len(self.ponds)

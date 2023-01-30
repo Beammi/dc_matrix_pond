@@ -33,7 +33,7 @@ from PondData import PondData
 class Pond:
     def __init__(self, fishStore: FishStore):
         pygame.init()
-        self.name = "sick-salmon"
+        self.name = "matrix-fish"
         self.moving_sprites = pygame.sprite.Group()
         self.sharkImage = pygame.image.load("./assets/images/sprites/shark.png")
         self.sharkImage = pygame.transform.scale(self.sharkImage, (128, 128))
@@ -75,7 +75,7 @@ class Pond:
         self.moving_sprites.add(tempFish)
 
     def pheromoneCloud(self):
-        pheromone = 0
+        pheromone = 20
         # RuntimeError: dictionary changed size during iteration
         # need to use .items() instead of .values()
         for f in list(self.fishes.values()):

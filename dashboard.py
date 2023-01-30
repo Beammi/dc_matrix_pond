@@ -45,7 +45,7 @@ class Dashboard(QMainWindow):
 
         self.grid = QGridLayout()
 
-        # temp = ["Fish ID: 123", "State: In Pond", "Status: alive", "Genesis: Sick-Salmon", "Crowd Threshold: 5/10", "Pheromone Level: 4/5", "Lifetime: 30/60"]
+        # temp = ["Fish ID: 123", "State: In Pond", "Status: alive", "Genesis: matrix-fish", "Crowd Threshold: 5/10", "Pheromone Level: 4/5", "Lifetime: 30/60"]
 
         # print(self.fished[0].getFishData().getGenesis())
 
