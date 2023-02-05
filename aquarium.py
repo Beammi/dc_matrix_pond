@@ -1,4 +1,5 @@
 import os
+import sys
 
 from FishStore import FishStore, connect_to_redis
 
@@ -7,11 +8,12 @@ from Pond import Pond
 
 os.environ["SDL_VIDEO_WINDOW_POS"] = "%d,%d" % (1000, 290)
 
-
 if __name__ == "__main__":
+    pond_name = sys.argv[1] if len(sys.argv) > 1 else "matrix-fish"
+
     r = connect_to_redis()
     fishStore = FishStore(r)
-    pond = Pond(fishStore=fishStore)
+    pond = Pond(fishStore=fishStore, name=pond_name)
     pond.run()
 
     # rest of your code here

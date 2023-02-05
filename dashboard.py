@@ -127,3 +127,6 @@ class Dashboard(QMainWindow):
         self.show()
 
         return
+
+    def update(fishes):
+        pass

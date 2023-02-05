@@ -72,3 +72,5 @@ class PondDashboard(QMainWindow):
         self.show()
 
         return
+
+    def update(self,)

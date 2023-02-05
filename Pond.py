@@ -24,17 +24,19 @@ from Client import Client
 
 # from run import Dashboard
 from dashboard import Dashboard
-from Fish import Fish
+from Fish import Fish, FishGroup
 from FishStore import FishStore
 from pondDashboard import PondDashboard
 from PondData import PondData
 
+FISHES_POND_LIMIT = 3
+
 
 class Pond:
-    def __init__(self, fishStore: FishStore):
+    def __init__(self, fishStore: FishStore, name="matrix-fish"):
         pygame.init()
-        self.name = "matrix-fish"
-        self.moving_sprites = pygame.sprite.Group()
+        self.name = name
+        self.fish_group = FishGroup()
         self.sharkImage = pygame.image.load("./assets/images/sprites/shark.png")
         self.sharkImage = pygame.transform.scale(self.sharkImage, (128, 128))
         self.msg = ""
@@ -49,15 +51,15 @@ class Pond:
         self.PHEROMONE_EVENT = pygame.USEREVENT + 2
         self.SHARK_EVENT = pygame.USEREVENT + 3
 
-        self.fishes = self.fishStore.get_fishes()
-        for fish in self.fishes.values():
-            self.moving_sprites.add(fish)
+        for fish in self.fishStore.get_fishes().values():
+            self.fish_group.add_fish(fish)
+        self.fish_group.update_display()
 
     def getPondData(self):
         return self.pondData
 
     def getPopulation(self):
-        return len(self.fishes)
+        return self.fish_group.get_total()
 
     def randomFish(self):
         key = next(iter(self.fishes))
@@ -69,27 +71,30 @@ class Pond:
     #     fish.die()
 
     def spawnFish(self, parentFish=None):
-        tempFish = Fish(100, 100, self.name, parentFish.getId())
+        tempFish = Fish(100, 100, self.name, parentFish.getId() if parentFish else "-")
         self.fishStore.add_fish(tempFish.fishData)
-        self.fishes[tempFish.getId()] = tempFish
-        self.moving_sprites.add(tempFish)
+        self.fish_group.add_fish(tempFish)
 
     def pheromoneCloud(self):
         pheromone = 20
-        # RuntimeError: dictionary changed size during iteration
-        # need to use .items() instead of .values()
-        for f in list(self.fishes.values()):
-            f.increasePheromone(pheromone)
 
+        def inject_pheromone(f: Fish):
+            if self.fish_group.get_total() > FISHES_POND_LIMIT:
+                return
+
+            f.increasePheromone(pheromone)
+            # TODO: bottleneck: large spawn at the same time
             if f.isPregnant():  ## check that pheromone >= pheromone threshold
                 newFish = Fish(50, randint(50, 650), f.getGenesis(), f.getId())
                 self.fishStore.add_fish(newFish.fishData)
                 print("CHILD FISH")
-                print("number of fishes:", len(self.fishes))
+                print("number of fishes:", self.fish_group.get_total())
                 self.addFish(newFish)
                 # self.pondData.addFish( newFish.fishData)
 
                 f.resetPheromone()
+
+        self.fish_group.update_fishes(inject_pheromone)
 
     def migrateFish(self, fishIndex, destination):
         # destination = random.choice(self.network.other_ponds.keys())
@@ -108,24 +113,20 @@ class Pond:
     # ---------------implement---------------#``
 
     def addFish(self, newFishData):  # from another pond
-        self.fishes[newFishData.getId()] = newFishData
         self.pondData.addFish(newFishData.fishData)
         self.fishStore.add_fish(newFishData.fishData)
-        self.moving_sprites.add(newFishData)
+        self.fish_group.add_fish(newFishData)
         self.network.pond = self.pondData
 
-    def removeFish(self, fish):
-        self.fishes.pop(fish.getId(), None)
+    def removeFish(self, fish: Fish):
         print("---------------------------FISH SHOULD BE REMOVED-------------------------")
         print(fish.getId())
         self.pondData.removeFish(fish.getId())
         self.network.pond = self.pondData
-        self.moving_sprites.remove(fish)
+        self.fish_group.remove_fish(fish.getGenesis(), fish.getId())
 
     def update(self, injectPheromone=False):
-        for fish in list(self.fishes.values()):
-            self.update_fish(fish)
-        # self.pool.map(self.update_fish, self.fishes)
+        self.fish_group.update_fishes(self.update_fish)
 
     def update_fish(self, f: Fish, ind=2, injectPheromone=False):
         f.updateLifeTime()  # decrease life time by 1 sec
@@ -156,16 +157,16 @@ class Pond:
                     parent = None
                     if f.fishData.parentId:
                         parent = f.fishData.parentId
-                    for ind2, f2 in enumerate(self.fishes.values()):
-                        if (
-                            parent
-                            and f2.fishData.parentId == parent
-                            or f2.fishData.parentId == f.getId()
-                        ):
-                            self.migrateFish(ind2, dest)
-                            # self.network.migrate_fish( f2, dest)
-                            # self.pondData.migrateFish(f2.getId())
-                            break
+                    # for ind2, f2 in enumerate(self.fishes.values()):
+                    #     if (
+                    #         parent
+                    #         and f2.fishData.parentId == parent
+                    #         or f2.fishData.parentId == f.getId()
+                    #     ):
+                    #         self.migrateFish(ind2, dest)
+                    #         # self.network.migrate_fish( f2, dest)
+                    #         # self.pondData.migrateFish(f2.getId())
+                    #         break
 
             elif f.getGenesis() == self.name and f.in_pond_sec >= 15:
                 dest = random.choice(list(self.network.other_ponds.keys()))
@@ -175,16 +176,16 @@ class Pond:
                 parent = None
                 if f.fishData.parentId:
                     parent = f.fishData.parentId
-                for ind2, f2 in enumerate(self.fishes.values()):
-                    if (
-                        parent
-                        and f2.fishData.parentId == parent
-                        or f2.fishData.parentId == f.getId()
-                    ):
-                        self.migrateFish(ind2, dest)
-                        # self.network.migrate_fish( f2, dest)
-                        # self.pondData.migrateFish(f2.getId())
-                        break
+                # for ind2, f2 in enumerate(self.fishes.values()):
+                #     if (
+                #         parent
+                #         and f2.fishData.parentId == parent
+                #         or f2.fishData.parentId == f.getId()
+                #     ):
+                #         self.migrateFish(ind2, dest)
+                #         # self.network.migrate_fish( f2, dest)
+                #         # self.pondData.migrateFish(f2.getId())
+                #         break
             else:
                 dest = random.choice(list(self.network.other_ponds.keys()))
                 if self.getPopulation() > f.getCrowdThresh():
@@ -225,9 +226,7 @@ class Pond:
         start_time = pygame.time.get_ticks()
         pregnant_time = pygame.time.get_ticks()
 
-        begin_fish = Fish(10, 100)
-        self.addFish(begin_fish)
-        self.fishStore.add_fish(begin_fish.fishData)
+        self.spawnFish()
 
         # self.addFish(Fish(10,140, genesis="peem"))
         # self.addFish(Fish(100,200, genesis="dang"))
@@ -258,10 +257,10 @@ class Pond:
                 elif event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_RIGHT:
                         # print(self.fishes[0].getId())
-                        allPondsNum = len(self.fishes)
+                        allPondsNum = self.fish_group.get_total()
                         for p in self.network.other_ponds.values():
                             allPondsNum += p.getPopulation()
-                        d = Dashboard(list(self.fishes.values()), allPondsNum)
+                        # d = Dashboard(list(self.fishes.values()), allPondsNum)
                         pond_handler = threading.Thread(target=app.exec_)
                         pond_handler.start()
                     elif event.key == pygame.K_LEFT:
@@ -276,17 +275,18 @@ class Pond:
                     # pregnant_time?
                     self.pheromoneCloud()
                 elif event.type == self.SHARK_EVENT:
-                    if len(self.fishes) > 4:
-                        deadFish = self.randomFish()
-                        screen.blit(
-                            self.sharkImage, (deadFish.getFishx() + 30, deadFish.getFishy())
-                        )
-                        pygame.display.flip()
-                        pygame.event.pump()
-                        pygame.time.delay(500)
-                        self.removeFish(deadFish)
-                        deadFish.die()
-                        start_time = pygame.time.get_ticks()
+                    pass
+                    # if len(self.fishes) > 4:
+                    #     deadFish = self.randomFish()
+                    #     screen.blit(
+                    #         self.sharkImage, (deadFish.getFishx() + 30, deadFish.getFishy())
+                    #     )
+                    #     pygame.display.flip()
+                    #     pygame.event.pump()
+                    #     pygame.time.delay(500)
+                    #     self.removeFish(deadFish)
+                    #     deadFish.die()
+                    #     start_time = pygame.time.get_ticks()
 
             other_pond_list = []
 
@@ -309,11 +309,11 @@ class Pond:
                     # self.pondData.addFish(newFish.fishData)
                     # self.network.pond = self.pondData
 
+            self.fish_group.update_display()
+
             screen.fill((0, 0, 0))
             screen.blit(bg, [0, 0])
-
-            self.moving_sprites.update(screen=screen)
-
+            self.fish_group.draw(screen)
             # print(len(self.fishes))
 
             # if time_since_last_data_send > 2000:

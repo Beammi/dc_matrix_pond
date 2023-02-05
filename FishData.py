@@ -37,8 +37,6 @@ class FishData:
     def has_time_passed(self, seconds: int) -> bool:
         current_time = datetime.datetime.now()
         time_diff = current_time - self.timestamp
-        print(f"elapsed: {time_diff.total_seconds()}")
-        print(f"lifetime: {seconds} id: {self.getId()}")
         return time_diff.total_seconds() >= seconds
 
     def get_remaining_lifetime(self):
