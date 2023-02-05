@@ -1,3 +1,4 @@
+# TODO: data from fish group
 class PondData:
     def __init__(self, pondName):
         self.pondName = pondName
@@ -7,7 +8,6 @@ class PondData:
         fishId = ""
         for f in self.fishes.values():
             fishId += f.getId() + " "
-            print(f)
         return self.pondName + " " + str(len(self.fishes))
 
     def getPondName(self):

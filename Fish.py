@@ -4,6 +4,7 @@ from typing import Callable, DefaultDict, Dict
 
 import pygame
 
+import consts
 from FishData import FishData
 
 # example: "./assets/images/sprites/<pond-name>/"
@@ -44,7 +45,9 @@ load_sprites()
 
 
 class Fish(pygame.sprite.Sprite):
-    def __init__(self, pos_x, pos_y, genesis="matrix-fish", parent=None, data: FishData = None):
+    def __init__(
+        self, pos_x=None, pos_y=None, genesis="matrix-fish", parent=None, data: FishData = None
+    ):
         super().__init__()
         self.fishData = FishData(genesis, parent) if not data else data
 
@@ -62,7 +65,7 @@ class Fish(pygame.sprite.Sprite):
         self.rect.topleft = [self.fishData.x, self.fishData.y]
         self.rect.left = self.fishData.x
         self.rect.top = self.fishData.y
-        self.rect.right = pos_x + 100
+        self.rect.right = self.fishData.x + 100
         self.attack_animation = True
         self.current_sprite = 0
         self.rect = self.image.get_rect()
@@ -170,7 +173,6 @@ class Fish(pygame.sprite.Sprite):
         pass
 
 
-FISHES_DISPLAY_LIMIT = 100
 import time
 
 
@@ -180,17 +182,19 @@ class FishGroup(pygame.sprite.Group):
         # self.fishes['matrix-fish']['113230'] = {Fish1, Fish2, ...}
         self.fishes: DefaultDict[str, Dict[str, Fish]] = defaultdict(dict)
         self.percentage: Dict[str, float] = {}
-        self.limit = FISHES_DISPLAY_LIMIT
+        self.limit = consts.FISHES_DISPLAY_LIMIT
         self.last_update_time = time.time()
 
     def add_fish(self, fish: Fish):
         self.fishes[fish.getGenesis()][fish.getId()] = fish
+        self.update_percentages()
         if self.get_total() < self.limit:
             self.add(fish)
 
     def remove_fish(self, genesis, fish_id):
         if genesis in self.fishes:
             fish = self.fishes[genesis].pop(fish_id, None)
+            self.update_percentages()
             if fish:
                 self.remove(fish)
 
@@ -205,16 +209,16 @@ class FishGroup(pygame.sprite.Group):
     def get_percentages(self) -> Dict[str, float]:
         return self.percentage
 
+    def update_percentages(self):
+        for genesis in self.fishes.keys():
+            self.percentage[genesis] = len(self.fishes[genesis]) / self.get_total()
+
     def update_display(self):
         current_time = time.time()
         self.last_update_time = current_time
 
         total_fishes = self.get_total()
         if total_fishes > self.limit:
-            print("Over limit, re-calculating..")
-            for fish_type in self.fishes.keys():
-                self.percentage[fish_type] = len(self.fishes[fish_type]) / total_fishes
-
             self.empty()
             for fish_type in self.fishes.keys():
                 fish_type_limit = int(self.percentage[fish_type] * self.limit)

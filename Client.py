@@ -1,15 +1,20 @@
 import pickle
+import random
 import socket
+import sys
+import threading
 import time
+from typing import Callable
 
 # sys.path.append('../src')
 from FishData import FishData
 from Payload import Payload
+from PondData import PondData
 from server import PORT
 
 IP = "0.tcp.ap.ngrok.io"
 
-ADDR = (IP, 18448)  # 19777
+ADDR = (IP, 11115)  # 19777
 # IP = socket.gethostbyname(socket.gethostname())#"0.tcp.ap.ngrok.io"
 
 # ADDR = (IP, PORT)
@@ -19,7 +24,7 @@ DISCONNECT_MSG = "!DISCONNECT"
 
 
 class Client:
-    def __init__(self, pond):
+    def __init__(self, pond: PondData, handle_migrate: Callable[[FishData], None]):
         self.client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.server = IP
         self.port = PORT
@@ -31,11 +36,18 @@ class Client:
         self.payload = Payload()
         self.pond = pond
         self.messageQ = []
+        self.handle_migrate = handle_migrate
+
+        msg_handler = threading.Thread(target=self.get_msg)
+        msg_handler.start()
+        send_handler = threading.Thread(target=self.send_pond)
+        send_handler.start()
 
     def get_msg(self):
         while self.connected:
             time.sleep(0.5)
             msg: Payload = pickle.loads(self.client.recv(MSG_SIZE))
+            print(f"received msg: {msg.action}, {msg.data}")
             if msg:
                 self.messageQ.append(msg)
                 self.handle_msg(msg)
@@ -46,7 +58,6 @@ class Client:
         try:
             self.client.connect(self.addr)
             print("Client connected ")
-            return "Connected"
         except:
             print("Can not connect to the server")
 
@@ -66,7 +77,16 @@ class Client:
         except socket.error as e:
             print(e)
 
-    def migrate_fish(self, fishData, destination):
+    def migrate_random(self, fish: FishData) -> bool:
+        print("trying to migrated")
+        if not self.other_ponds:
+            return False
+
+        dest = random.choice(list(self.other_ponds.keys()))
+        self._migrate_fish(fish, dest)
+        return True
+
+    def _migrate_fish(self, fishData, destination):
         ### Migration takes a special object for the payload to pickup : The destination pond's name
         try:
 
@@ -119,7 +139,7 @@ class Client:
     def handle_msg(self, msg: Payload):
         msg_action = msg.action
         msg_object = msg.data
-
+        print("handle_msg: ", msg.action)
         if msg_action == "SEND" and self.pond.pondName != msg_object.pondName:
             self.other_ponds[
                 msg_object.pondName
@@ -132,9 +152,7 @@ class Client:
         elif msg_action == "MIGRATE":
             if self.pond.pondName == msg_object["destination"]:
                 print("=======RECIEVED MIGRATION=======")
-                # self.pond.addFish(msg_object["fish"])
-                print(self.pond.fishes.values())
-                print("================================")
+                self.handle_migrate(msg_object["fish"])
 
         elif msg_action == DISCONNECT_MSG:
             print("DIS ACTION", msg_action)
@@ -157,29 +175,16 @@ class Client:
         #     return msg
 
 
+# for testing
 if __name__ == "__main__":
-    pond = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    pond.connect(ADDR)
-    print(f"Client connected ")
-
-    connected = True
-    while connected:
-        f = FishData("Sick Salmon", "123456")
-        print("Client send :", f)
-        msg = pickle.dumps(f)
-        # message = bytes(f'{len(msg):<{HEADER}}',FORMAT) + msg
-        # "MIGRATE FROM .... TO ...." + msg(fish class)
-        # msg = "hi"
-        pond.send(msg)  # .encode(FORMAT)
-        # self.client.send(pickle.dumps(data))
-        # return pickle.loads(self.client.recv(2048))
-        if msg == DISCONNECT_MSG:
-            connected = False
-        else:
-            msg = pickle.loads(pond.recv(MSG_SIZE))  # .decode(FORMAT)
-            print(f"Vivisystem : {msg}")
-        time.sleep(5)
-
+    pond_name = sys.argv[1] if len(sys.argv) > 1 else "matrix-fish"
+    p = PondData(pondName=pond_name)
+    client = Client(p)
+    while 1:
+        f = FishData(pond_name)
+        ok = client.migrate_random(f)
+        print(f"Migrated: {ok}")
+        time.sleep(3)
     # def __init__(self):
     #     self.client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     #     self.server = IP

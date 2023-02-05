@@ -1,7 +1,7 @@
 import pickle
 import time
 from dataclasses import dataclass
-from typing import Dict, List
+from typing import Dict, List, Union
 
 import redis
 
@@ -25,11 +25,11 @@ log = get_logger("redis")
 
 
 def connect_to_redis(
-    host="localhost", port=6379, password=None, retries=3, retry_interval=1
-) -> redis.StrictRedis | None:
+    host="localhost", port=6379, password=None, retries=3, retry_interval=1, db=0
+) -> Union[redis.StrictRedis, None]:
     for i in range(retries):
         try:
-            r = redis.StrictRedis(host=host, port=port, password=password)
+            r = redis.StrictRedis(host=host, port=port, password=password, db=db)
             if r.ping():
                 log.info(f"Connected to Redis at {host}:{port}")
                 return r

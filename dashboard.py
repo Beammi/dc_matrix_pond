@@ -1,3 +1,6 @@
+import time
+from typing import DefaultDict, Dict
+
 from PyQt5 import QtGui, QtWidgets, uic
 from PyQt5.QtCore import QSize, Qt
 from PyQt5.QtWidgets import (
@@ -16,20 +19,30 @@ from PyQt5.QtWidgets import (
     QWidget,
 )
 
+from Fish import FishGroup
 from fishFrame import FishFrame
 
 
 class Dashboard(QMainWindow):
-    def __init__(self, allFish=None, allPondsNum=None):
-
+    def __init__(self, fishes: FishGroup):
         super().__init__()
-        self.fishes = allFish
-
-        self.allPondsNum = allPondsNum
-
-        # print(self.fished[0].getId())
-
+        self.fishes: FishGroup = fishes
+        self.last_updated = time.time()
+        self.label = QLabel(self)
+        self.update_dashboard()
         self.initUI()
+
+    def update_dashboard(self):
+        current_time = time.time()
+        if current_time - self.last_updated < 2:
+            return
+        percentages = self.fishes.get_percentages()
+        percentages_str = ""
+        for genesis, p in percentages.items():
+            percentages_str += f"{genesis}: {p * 100:.2f}%\n"
+        self.label.setText(
+            "Vivi Population : " + str(self.fishes.get_total()) + "\n" + percentages_str
+        )
 
     def initUI(self):
 
@@ -57,52 +70,41 @@ class Dashboard(QMainWindow):
 
         i = 0
 
-        label = QLabel(
-            "Vivi Population : "
-            + str(len(self.fishes))
-            + "/"
-            + str(self.allPondsNum)
-            + " ("
-            + str(int((len(self.fishes) / self.allPondsNum) * 100))
-            + "%)",
-            self,
-        )
-
-        font = label.font()
+        font = self.label.font()
 
         font.setPointSize(30)
 
         font.setBold(True)
 
-        label.setFont(font)
+        self.label.setFont(font)
 
-        for r in range(0, num):
+        # for r in range(0, num):
 
-            # print("out", i, temp, j)
+        #     # print("out", i, temp, j)
 
-            while j < 2 and i < num:
+        #     while j < 2 and i < num:
 
-                # print("here", i, temp, j)
+        #         # print("here", i, temp, j)
 
-                info = [
-                    self.fishes[i].getFishData().getId(),
-                    self.fishes[i].getFishData().getState(),
-                    self.fishes[i].getFishData().getStatus(),
-                    self.fishes[i].getFishData().getGenesis(),
-                    str(self.fishes[i].getFishData().lifetime),
-                ]
+        #         info = [
+        #             self.fishes[i].getFishData().getId(),
+        #             self.fishes[i].getFishData().getState(),
+        #             self.fishes[i].getFishData().getStatus(),
+        #             self.fishes[i].getFishData().getGenesis(),
+        #             str(self.fishes[i].getFishData().lifetime),
+        #         ]
 
-                self.grid.addWidget(FishFrame(info, self.widget), temp, j)
+        #         self.grid.addWidget(FishFrame(info, self.widget), temp, j)
 
-                i += 1
+        #         i += 1
 
-                j += 1
+        #         j += 1
 
-            j = 0
+        #     j = 0
 
-            temp += 1
+        #     temp += 1
 
-        self.vbox.addWidget(label)
+        self.vbox.addWidget(self.label)
 
         self.vbox.addLayout(self.grid)
 
@@ -122,11 +124,12 @@ class Dashboard(QMainWindow):
 
         self.setGeometry(0, 290, 500, 700)
 
-        self.setWindowTitle("Dashboard")
+        self.setWindowTitle("Pond Dashboard")
 
         self.show()
 
         return
 
     def update(fishes):
+
         pass

@@ -34,6 +34,9 @@ class FishData:
         self.x, self.y = random.randint(50, 650), random.randint(50, 650)
         self.timestamp = datetime.datetime.now()
 
+    def random_pos(self):
+        self.x, self.y = random.randint(50, 650), random.randint(50, 650)
+
     def has_time_passed(self, seconds: int) -> bool:
         current_time = datetime.datetime.now()
         time_diff = current_time - self.timestamp
@@ -70,15 +73,16 @@ class FishData:
         return self.parentId
 
     def __str__(self):
-        if self.parentId:
-            return (
-                self.id
-                + " Genesis: "
-                + self.genesis
-                + " Parent: "
-                + self.parentId
-                + " Lifetime: "
-                + str(self.lifetime)
-            )
-        else:
-            return self.id + " Genesis: " + self.genesis + " Lifetime: " + str(self.lifetime)
+        pass
+        # if self.parentId:
+        #     return (
+        #         self.id
+        #         + " Genesis: "
+        #         + self.genesis
+        #         + " Parent: "
+        #         + self.parentId
+        #         + " Lifetime: "
+        #         + str(self.lifetime)
+        #     )
+        # else:
+        #     return self.id + " Genesis: " + self.genesis + " Lifetime: " + str(self.lifetime)
