@@ -41,7 +41,6 @@ class Dashboard(QMainWindow):
         self.label = QLabel(self)
         self.slicedata = []
         self.chart_view = MySimpleChart(self.slicedata)
-        self.update_dashboard()
 
         self.sliceColors = ["#82d3e5", "#cfeef5", "#fd635c", "#fdc4c1",
                             "#feb543", "#ffe3b8", "#CCCCFF", "#40E0D0", "#9FE2BF", "#FFA07A"]
@@ -73,6 +72,14 @@ class Dashboard(QMainWindow):
             "Pond Population : " +
             str(self.fishes.get_total()) + "\n" + percentages_str + "\n"
         )
+        label_str += f"Pond Pheremone: {pheromone}\n"
+
+        label_str += f"\nConstants:\n Population Limit: {consts.FISHES_POND_LIMIT}\n"
+        label_str += f" Display Limit: {consts.FISHES_DISPLAY_LIMIT}\n"
+        label_str += f" Birth Rate: {consts.BIRTH_RATE}x\n"
+
+        self.label.setText(label_str)
+        self.update_history_graph()
         self.create_piechart(percentages)
 
     def create_piechart(self, percentages):
@@ -85,49 +92,6 @@ class Dashboard(QMainWindow):
         self.chart = MySimpleChart(self.slicedata)
         self.chart_view = QtChart.QChartView(self.chart)
         self.chart_view.setRenderHint(QtGui.QPainter.Antialiasing)
-
-        label_str += f"Pond Pheremone: {pheromone}\n"
-
-        label_str += f"\nConstants:\n Population Limit: {consts.FISHES_POND_LIMIT}\n"
-        label_str += f" Display Limit: {consts.FISHES_DISPLAY_LIMIT}\n"
-        label_str += f" Birth Rate: {consts.BIRTH_RATE}x\n"
-
-        self.label.setText(label_str)
-        self.update_history_graph()
-
-    def update_history_graph(self):
-        population_history = self.fishes.get_population_history()
-
-        for i, (key, data) in enumerate(population_history.items()):
-            x = [d[0] for d in data]
-            y = [d[1] for d in data]
-
-            if key not in self.lines:
-                color = self.colors[i % len(self.colors)]
-                symbol_pen = QtGui.QPen(QtGui.QColor(*color))
-                symbol_pen.setWidth(2)
-                line = pg.PlotDataItem(
-                    x, y, name=key, symbol="o", symbolSize=5, symbolPen=symbol_pen
-                )
-                brush = QtGui.QBrush(QtGui.QColor(*color, 100))
-                line.setFillBrush(brush)
-                line.setFillLevel(0)
-                self.lines[key] = line
-                self.graphWidget.addItem(line)
-            else:
-                line = self.lines[key]
-                line.setData(x, y)
-
-        self.graphWidget.show()
-
-        label_str += f"Pond Pheremone: {pheromone}\n"
-
-        label_str += f"\nConstants:\n Population Limit: {consts.FISHES_POND_LIMIT}\n"
-        label_str += f" Display Limit: {consts.FISHES_DISPLAY_LIMIT}\n"
-        label_str += f" Birth Rate: {consts.BIRTH_RATE}x\n"
-
-        self.label.setText(label_str)
-        self.update_history_graph()
 
     def update_history_graph(self):
         population_history = self.fishes.get_population_history()
@@ -235,8 +199,6 @@ class Dashboard(QMainWindow):
         self.vbox.addWidget(self.graphWidget)
 
         self.vbox.addWidget(self.chart_view)
-
-        self.vbox.addWidget(self.graphWidget)
 
         self.vbox.addLayout(self.grid)
 
