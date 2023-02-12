@@ -14,7 +14,7 @@ from server import PORT
 
 IP = "0.tcp.ap.ngrok.io"
 
-ADDR = (IP, 11115)  # 19777
+ADDR = (IP, 12625)  # 19777
 # IP = socket.gethostbyname(socket.gethostname())#"0.tcp.ap.ngrok.io"
 
 # ADDR = (IP, PORT)

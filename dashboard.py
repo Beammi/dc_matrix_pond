@@ -80,25 +80,26 @@ class Dashboard(QMainWindow):
 
         # for r in range(0, num):
 
-        #     # print("out", i, temp, j)
+            # print("out", i, temp, j)
 
         #     while j < 2 and i < num:
 
         #         # print("here", i, temp, j)
 
-        #         info = [
-        #             self.fishes[i].getFishData().getId(),
-        #             self.fishes[i].getFishData().getState(),
-        #             self.fishes[i].getFishData().getStatus(),
-        #             self.fishes[i].getFishData().getGenesis(),
-        #             str(self.fishes[i].getFishData().lifetime),
-        #         ]
+        #     # info = [
+        #     #         self.fishes[key].getFishData().getId(),
+        #     #         self.fishes[key].getFishData().getState(),
+        #     #         self.fishes[key].getFishData().getStatus(),
+        #     #         self.fishes[key].getFishData().getGenesis(),
+        #     #         str(self.fishes[key].getFishData().lifetime),
+        #     # ]
+        #     info = self.fishes.getFishes()
 
-        #         self.grid.addWidget(FishFrame(info, self.widget), temp, j)
+        #     self.grid.addWidget(FishFrame(info, self.widget), temp, j)
 
-        #         i += 1
+        #     i += 1
 
-        #         j += 1
+        #     j += 1
 
         #     j = 0
 
