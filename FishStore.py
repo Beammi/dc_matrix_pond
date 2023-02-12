@@ -54,7 +54,7 @@ def connect_to_redis(
 # Fish transporter from/to redis
 class FishStore:
     def __init__(self, redis):
-        self.redis = redis
+        self.redis: redis.StrictRedis = redis
 
     def add_fish(self, fish: FishData):
         self.redis.set(fish.getId(), pickle.dumps(fish), ex=fish.getLifetime())
@@ -75,6 +75,17 @@ class FishStore:
         ]
         fishes = [Fish(fish.x, fish.y, data=fish) for fish in fishes_data]
         return dict(zip(fish_ids, fishes))
+
+    def set_pheromone(self, pheromone: int):
+        self.redis.select(1)
+        self.redis.set("pheromone", pheromone)
+        self.redis.select(0)
+
+    def get_pheromone(self) -> int:
+        self.redis.select(1)
+        pheromone = self.redis.get("pheromone")
+        self.redis.select(0)
+        return int(pheromone) if pheromone is not None else 0
 
 
 # TODO: get address from env
