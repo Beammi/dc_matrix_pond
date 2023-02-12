@@ -46,6 +46,7 @@ class Pond:
         self.sharkTime = 0
         self.displayShark = False
         self.fishStore: FishStore = fishStore
+        self.pheromone = self.fishStore.get_pheromone()
 
         # EVENTS
         self.UPDATE_EVENT = pygame.USEREVENT + 1
@@ -71,29 +72,18 @@ class Pond:
     #     self.removeFish(fish)
     #     fish.die()
 
-    def spawnFish(self, parentFish=None):
+    def spawnFish(self, parentFish: Fish = None):
         tempFish = Fish(100, 100, self.name, parentFish.getId() if parentFish else "-")
         self.fishStore.add_fish(tempFish.fishData)
         self.fish_group.add_fish(tempFish)
 
     def pheromoneCloud(self):
-        pheromone = 20
+        if self.fish_group.get_total() > consts.FISHES_POND_LIMIT:
+            return
 
-        def inject_pheromone(f: Fish):
-            if self.fish_group.get_total() > consts.FISHES_POND_LIMIT:
-                return
-
-            f.increasePheromone(pheromone)
-            # TODO: bottleneck: large spawn at the same time
-            if f.isPregnant():  ## check that pheromone >= pheromone threshold
-                newFish = Fish(50, randint(50, 650), f.getGenesis(), f.getId())
-                self.fishStore.add_fish(newFish.fishData)
-                self.addFish(newFish)
-                # self.pondData.addFish( newFish.fishData)
-
-                f.resetPheromone()
-
-        self.fish_group.update_fishes(inject_pheromone)
+        # TODO: increase this rate over time?
+        self.pheromone += randint(20, 50) * consts.BIRTH_RATE
+        self.fishStore.set_pheromone(self.pheromone)
 
     def addFish(self, fish: Fish):  # from another pond
         # self.pondData.addFish(newFishData.fishData)
@@ -107,9 +97,11 @@ class Pond:
         self.pondData.removeFish(fish.getId())
         self.network.pond = self.pondData
         self.fish_group.remove_fish(fish.getGenesis(), fish.getId())
+        fish.die()
 
     def update(self, injectPheromone=False):
         self.fish_group.update_fishes(self.update_fish)
+        self.fishStore.set_pheromone(self.pheromone)
 
     # will apply to indiviual fish
     def update_fish(self, f: Fish, injectPheromone=False):
@@ -117,6 +109,14 @@ class Pond:
         if f.fishData.status == "dead":
             self.removeFish(f)
             return
+
+        if f.isPregnant(self.pheromone):  # check that pheromone >= pheromone threshold
+            newFish = Fish(50, randint(50, 650), f.getGenesis(), f.getId())
+            self.fishStore.add_fish(newFish.fishData)
+            self.addFish(newFish)
+            # self.pondData.addFish( newFish.fishData)
+            self.pheromone -= f.fishData.crowdThreshold // 2
+
         self.pondData.setFish(f.fishData)
 
         # Other pond exists
@@ -194,7 +194,7 @@ class Pond:
         direction = 1
         speed_x = 3
         # speed_y = 4
-        random.seed(123)
+        # random.seed(123)
 
         dashboard: Union[None, Dashboard] = None
         vivisystem_dashboard: Union[None, PondDashboard] = None
@@ -208,7 +208,7 @@ class Pond:
 
         bg = pygame.image.load("./assets/images/background/bg.jpg")
         bg = pygame.transform.scale(bg, (1280, 720))
-        pygame.display.set_caption("Fish Haven Project")
+        pygame.display.set_caption(f"Fish Haven Project: {self.name} Pond")
         clock = pygame.time.Clock()
         start_time = pygame.time.get_ticks()
         pregnant_time = pygame.time.get_ticks()
@@ -268,7 +268,7 @@ class Pond:
                     #     start_time = pygame.time.get_ticks()
 
             if dashboard:
-                dashboard.update_dashboard()
+                dashboard.update_dashboard(self.pheromone)
             if vivisystem_dashboard:
                 vivisystem_dashboard.update_dashboard()
 

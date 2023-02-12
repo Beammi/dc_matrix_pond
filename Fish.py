@@ -1,6 +1,7 @@
 import random
+import time
 from collections import defaultdict
-from typing import Callable, DefaultDict, Dict
+from typing import Callable, DefaultDict, Dict, List
 
 import pygame
 
@@ -115,7 +116,7 @@ class Fish(pygame.sprite.Sprite):
 
     def update_ani(self):
         if self.attack_animation:
-            self.current_sprite += self.speed
+            self.current_sprite += self.speed  # not correct
             if int(self.current_sprite) >= len(self.sprites):
                 self.current_sprite = 0
         self.image = self.sprites[int(self.current_sprite)]
@@ -149,8 +150,11 @@ class Fish(pygame.sprite.Sprite):
     def getLifetime(self):
         return self.fishData.lifetime
 
-    def isPregnant(self):
-        return self.fishData.pheromone >= self.fishData.pheromoneThresh
+    def isPregnant(self, current_pheromone):
+        if current_pheromone < self.fishData.pheromoneThresh:
+            return False
+        self.fishData.pheromoneThresh += self.fishData.pheromoneThresh
+        return True
 
     def updateLifeTime(self):
         self.in_pond_sec += 1
@@ -173,9 +177,6 @@ class Fish(pygame.sprite.Sprite):
         pass
 
 
-import time
-
-
 class FishGroup(pygame.sprite.Group):
     def __init__(self):
         super().__init__()
@@ -183,7 +184,10 @@ class FishGroup(pygame.sprite.Group):
         self.fishes: DefaultDict[str, Dict[str, Fish]] = defaultdict(dict)
         self.percentage: Dict[str, float] = {}
         self.limit = consts.FISHES_DISPLAY_LIMIT
-        self.last_update_time = time.time()
+        self.last_updated_time = time.time()
+
+        # self.population_history['matrix-fish'] = [(timestamp, count), ...]
+        self.population_history: DefaultDict[str, List[List[tuple]]] = defaultdict(list)
 
     def add_fish(self, fish: Fish):
         self.fishes[fish.getGenesis()][fish.getId()] = fish
@@ -193,10 +197,8 @@ class FishGroup(pygame.sprite.Group):
 
     def remove_fish(self, genesis, fish_id):
         if genesis in self.fishes:
-            fish = self.fishes[genesis].pop(fish_id, None)
+            self.fishes[genesis].pop(fish_id, None)
             self.update_percentages()
-            if fish:
-                self.remove(fish)
 
     def update_fishes(self, update: Callable[[Fish], None]):
         for genesis in list(self.fishes.keys()):
@@ -211,10 +213,23 @@ class FishGroup(pygame.sprite.Group):
 
     def update_percentages(self):
         for genesis in self.fishes.keys():
-            self.percentage[genesis] = len(self.fishes[genesis]) / self.get_total()
+            total = self.get_total()
+            self.percentage[genesis] = len(self.fishes[genesis]) / total if total > 0 else 0
+
+    def update_population_history(self, current_time):
+        if current_time - self.last_updated_time <= 2:
+            return
+        for genesis in self.fishes.keys():
+            self.population_history[genesis].append((current_time, len(self.fishes[genesis])))
+        self.last_updated_time = current_time
+
+    def get_population_history(self):
+        return self.population_history
 
     def update_display(self):
         current_time = time.time()
+        self.update_population_history(current_time)
+
         self.last_update_time = current_time
 
         total_fishes = self.get_total()
@@ -234,4 +249,5 @@ class FishGroup(pygame.sprite.Group):
                         self.add(fish_sprite)
                     else:
                         break
+
         self.update()
