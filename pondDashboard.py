@@ -81,7 +81,7 @@ class PondDashboard(QMainWindow):
 
         self.setCentralWidget(self.scroll)
 
-        self.setGeometry(0, 20, 800, 200)
+        self.setGeometry(0, 20, 800, 300)
         self.setWindowTitle("Vivisystem Dashboard")
         self.show()
 

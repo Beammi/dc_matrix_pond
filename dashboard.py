@@ -1,5 +1,11 @@
+import random
 import time
 from typing import DefaultDict, Dict
+
+from PyQt5 import QtChart
+from PyQt5.QtChart import  QChart, QChartView, QPieSeries, QPieSlice
+from PyQt5.QtGui import QPainter, QPen
+from PyQt5.QtCore import Qt
 
 from PyQt5 import QtGui, QtWidgets, uic
 from PyQt5.QtCore import QSize, Qt
@@ -21,7 +27,8 @@ from PyQt5.QtWidgets import (
 
 from Fish import FishGroup
 from fishFrame import FishFrame
-
+from chart import MySimpleChart
+from collections import namedtuple
 
 class Dashboard(QMainWindow):
     def __init__(self, fishes: FishGroup):
@@ -29,8 +36,17 @@ class Dashboard(QMainWindow):
         self.fishes: FishGroup = fishes
         self.last_updated = time.time()
         self.label = QLabel(self)
+        self.slicedata = []
+        self.chart_view = MySimpleChart(self.slicedata)
         self.update_dashboard()
+        
+        self.sliceColors = ["#82d3e5","#cfeef5","#fd635c","#fdc4c1","#feb543","#ffe3b8", "#CCCCFF", "#40E0D0", "#9FE2BF" , "#FFA07A"]
+        self.PieData = namedtuple('Data', ['name', 'value', 'primary_color', 'secondary_color'])
+        percentages = self.fishes.get_percentages()
+        self.create_piechart(percentages)
+
         self.initUI()
+ 
 
     def update_dashboard(self):
         current_time = time.time()
@@ -43,6 +59,17 @@ class Dashboard(QMainWindow):
         self.label.setText(
             "Vivi Population : " + str(self.fishes.get_total()) + "\n" + percentages_str
         )
+        self.create_piechart(percentages)
+
+    def create_piechart(self, percentages):
+        for genesis , s in percentages.items():
+            randcol1 = random.choice(self.sliceColors)
+            randcol2 = random.choice(self.sliceColors)
+            node = self.PieData(genesis, s, QtGui.QColor(randcol1), QtGui.QColor(randcol2))
+            self.slicedata.append(node)
+        self.chart = MySimpleChart(self.slicedata)
+        self.chart_view = QtChart.QChartView(self.chart)
+        self.chart_view.setRenderHint(QtGui.QPainter.Antialiasing)
 
     def initUI(self):
 
@@ -105,6 +132,9 @@ class Dashboard(QMainWindow):
         #     temp += 1
 
         self.vbox.addWidget(self.label)
+        
+        self.vbox.addWidget(self.chart_view)
+
 
         self.vbox.addLayout(self.grid)
 
@@ -122,7 +152,7 @@ class Dashboard(QMainWindow):
 
         self.setCentralWidget(self.scroll)
 
-        self.setGeometry(0, 290, 500, 700)
+        self.setGeometry(0, 290, 600, 800)
 
         self.setWindowTitle("Pond Dashboard")
 
