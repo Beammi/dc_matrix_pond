@@ -235,3 +235,11 @@ class FishGroup(pygame.sprite.Group):
                     else:
                         break
         self.update()
+    
+    def getFishes(self):
+        fish = []
+        for key in self.fishes.keys():
+            fish.append(self.fishes['matrix-fish'][str(key)])
+            
+        
+        return fish

@@ -18,7 +18,10 @@ from PyQt5.QtWidgets import (
 
 from Client import Client
 from pondFrame import PondFrame
-
+import matplotlib.pyplot as plt
+import pyqtgraph as pg
+from pyqtgraph.Qt import QtCore, QtGui
+import numpy as np
 
 class PondDashboard(QMainWindow):
     def __init__(self, client, allPond=None):
@@ -31,6 +34,37 @@ class PondDashboard(QMainWindow):
 
     def update_dashboard(self):
         self.label.setText(f"Connected ponds: {self.client.other_ponds}")
+    
+    def graph(self):
+        matrix_pond = [1,2,5]
+        otherpond = [0,len(self.client.other_ponds),]
+        time = list(range(0,len(matrix_pond)))
+        plt.plot(time,matrix_pond)
+
+        plt.xlabel("Time")
+        plt.ylabel("Amount of Fish")
+
+        plt.title("Ponds Graph")
+        plt.show()
+
+    def graph_pyqt(self):
+        matrix_pond = [1,2,5]
+        otherpond = [0,len(self.client.other_ponds),3]
+        time = list(range(0,len(matrix_pond)))
+        plot = pg.plot()
+        plot.showGrid(x = True, y = True)
+        plot.addLegend()
+        # setting horizontal range
+        plt.setXRange(0, 10)
+ 
+        # setting vertical range
+        plt.setYRange(0, 20)
+ 
+        # setting window title to the plot window
+        plt.setWindowTitle("Pond Dashboard")
+
+        matrix_pond_line = plot.plot(time,matrix_pond)
+        otherpond_line = plot.plot(time,otherpond)
 
     def initUI(self):
 
@@ -42,7 +76,8 @@ class PondDashboard(QMainWindow):
             QVBoxLayout()
         )  # The Vertical Box that contains the Horizontal Boxes of  labels and buttons
         self.grid = QGridLayout()
-
+        self.graph_button = QPushButton("Graph")
+        self.graph_button.clicked.connect(self.graph)
         # temp = ["Fish ID: 123", "State: In Pond", "Status: alive", "Genesis: matrix-fish", "Crowd Threshold: 5/10", "Pheromone Level: 4/5", "Lifetime: 30/60"]
         # print(self.fishe[0].getFishData().getGenesis())
         # num = len(self.fished)
@@ -71,6 +106,7 @@ class PondDashboard(QMainWindow):
 
         self.vbox.addWidget(self.label)
         self.vbox.addLayout(self.grid)
+        self.vbox.addWidget(self.graph_button)
         self.widget.setLayout(self.vbox)
 
         # Scroll Area Properties
