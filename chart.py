@@ -28,6 +28,7 @@ class MySimpleChart(QtChart.QChart):
         self._datas = datas
 
         self.outer = QtChart.QPieSeries()
+        self.outer.setPieSize(1.0)
         self.set_outer_series()
         self.addSeries(self.outer)
 
