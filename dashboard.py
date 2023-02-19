@@ -4,9 +4,9 @@ from typing import DefaultDict, Dict
 
 from PyQt5 import QtChart
 from PyQt5.QtChart import QChart, QChartView, QPieSeries, QPieSlice
-from PyQt5.QtGui import QPainter, QPen
 from PyQt5.QtCore import Qt
 
+import sys
 import pyqtgraph as pg
 from PyQt5 import QtGui, QtWidgets, uic
 from PyQt5.QtCore import QSize, Qt
@@ -82,6 +82,8 @@ class Dashboard(QMainWindow):
             self.slicedata.append(node)
         self.chart = MySimpleChart(self.slicedata)
         self.chart_view = QtChart.QChartView(self.chart)
+        self.chart_view.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+        self.chart_view.setMinimumSize(300, 300)
         self.chart_view.setRenderHint(QtGui.QPainter.Antialiasing)
 
     def update_history_graph(self):
@@ -110,23 +112,22 @@ class Dashboard(QMainWindow):
         self.graphWidget.show()
     
     def createFishFrame(self,fish_list):
-
-        for i in reversed(range(3,self.grid.count())):
+        #delete old frames
+        for i in reversed(range(self.grid.count())):
             widget = self.grid.itemAt(i).widget()
             self.grid.removeWidget(widget)
             widget.setParent(None)
 
-
         temp = 3
         j = 0
         for i in range(len(fish_list)):
-            
+            fish_list[i].updateLifeTime()
             info = [
                 fish_list[i].getFishData().getId(),
                 fish_list[i].getFishData().getState(),
                 fish_list[i].getFishData().getStatus(),
                 fish_list[i].getFishData().getGenesis(),
-                fish_list[i].getFishData().getLifetime()
+                fish_list[i].getFishData().getLifeTimeLeft()
             ]
             self.grid.addWidget(FishFrame(info, self.widget), temp, j)
             # temp +=1
@@ -144,10 +145,8 @@ class Dashboard(QMainWindow):
 
         self.widget = QWidget()  # Widget that contains the collection of Vertical Box
 
-        self.vbox = (
-            QVBoxLayout()
-        )  # The Vertical Box that contains the Horizontal Boxes of  labels and buttons
-
+        self.vbox = QVBoxLayout()
+        self.h_layout1 = QHBoxLayout()
         self.grid = QGridLayout()
 
         # temp = ["Fish ID: 123", "State: In Pond", "Status: alive", "Genesis: matrix-fish", "Crowd Threshold: 5/10", "Pheromone Level: 4/5", "Lifetime: 30/60"]
@@ -163,37 +162,6 @@ class Dashboard(QMainWindow):
         font.setBold(True)
 
         self.label.setFont(font)
-
-        # self.createFishFrame()
-        
-            
-
-        # for r in range(0, num):
-
-        # print("out", i, temp, j)
-
-        #     while j < 2 and i < num:
-
-        #         # print("here", i, temp, j)
-
-        #     # info = [
-        #     #         self.fishes[key].getFishData().getId(),
-        #     #         self.fishes[key].getFishData().getState(),
-        #     #         self.fishes[key].getFishData().getStatus(),
-        #     #         self.fishes[key].getFishData().getGenesis(),
-        #     #         str(self.fishes[key].getFishData().lifetime),
-        #     # ]
-        #     info = self.fishes.getFishes()
-
-        #     self.grid.addWidget(FishFrame(info, self.widget), temp, j)
-
-        #     i += 1
-
-        #     j += 1
-
-        #     j = 0
-
-        #     temp += 1
 
         self.graphWidget = pg.PlotWidget()
         self.setCentralWidget(self.graphWidget)
@@ -211,11 +179,13 @@ class Dashboard(QMainWindow):
         # Add grid
         self.graphWidget.showGrid(x=True, y=True)
         # Set Range
+
+        self.h_layout1.addWidget(self.graphWidget)
+        self.h_layout1.addWidget(self.chart_view)
+
+        #Add components to QVBoxLayout
         self.vbox.addWidget(self.label)
-        self.vbox.addWidget(self.graphWidget)
-
-        self.vbox.addWidget(self.chart_view)
-
+        self.vbox.addLayout(self.h_layout1)
         self.vbox.addLayout(self.grid)
 
         self.widget.setLayout(self.vbox)
