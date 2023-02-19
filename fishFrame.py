@@ -34,7 +34,7 @@ class FishFrame(QGroupBox):
         self.addLabel(QLabel("State: " + str(info[1])))
         self.addLabel(QLabel("Status: " + str(info[2])))
         self.addLabel(QLabel("Genesis: " + str(info[3])))
-        self.addLabel(QLabel("Lifetime: " + str(info[4])))
+        self.addLabel(QLabel("Lifetime Left: " + str(info[4])))
 
     def addLabel(self, widget):
         self.vbox.addWidget(widget)
