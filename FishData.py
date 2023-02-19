@@ -42,8 +42,10 @@ class FishData:
         time_diff = current_time - self.timestamp
         return time_diff.total_seconds() >= seconds
 
-    def get_remaining_lifetime(self):
-        pass
+    def getLifeTimeLeft(self):
+        current_time = datetime.datetime.now()
+        time_diff = current_time - self.timestamp
+        return self.lifetime - time_diff.seconds
 
     def getId(self):
         return self.id
@@ -52,6 +54,8 @@ class FishData:
         return self.state
 
     def getStatus(self):
+        if self.getLifeTimeLeft == 0:
+            self.status = 'dead'
         return self.status
 
     def getGenesis(self):
