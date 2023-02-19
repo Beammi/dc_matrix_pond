@@ -26,7 +26,7 @@ class Dashboard(QMainWindow):
         self.fishes: FishGroup = fishes
         self.last_updated = time.time()
         self.label = QLabel(self)
-        self.label.setFont(QFont('Arial',14))
+        self.label.setFont(QFont('Arial',12))
         self.slicedata = []
         self.chart_view = MySimpleChart(self.slicedata)
 
@@ -66,9 +66,12 @@ class Dashboard(QMainWindow):
         label_str += f"\tDisplay Limit: {consts.FISHES_DISPLAY_LIMIT}\n"
         label_str += f"\tBirth Rate: {consts.BIRTH_RATE}x\n"
 
+        fish_list = self.fishes.getFishes()
+
         self.label.setText(label_str)
         self.update_history_graph()
         self.create_piechart(percentages)
+        self.createFishFrame(fish_list)
 
     def create_piechart(self, percentages):
         for genesis, s in percentages.items():
@@ -105,6 +108,33 @@ class Dashboard(QMainWindow):
                 line.setData(x, y)
 
         self.graphWidget.show()
+    
+    def createFishFrame(self,fish_list):
+
+        for i in reversed(range(3,self.grid.count())):
+            widget = self.grid.itemAt(i).widget()
+            self.grid.removeWidget(widget)
+            widget.setParent(None)
+
+
+        temp = 3
+        j = 0
+        for i in range(len(fish_list)):
+            
+            info = [
+                fish_list[i].getFishData().getId(),
+                fish_list[i].getFishData().getState(),
+                fish_list[i].getFishData().getStatus(),
+                fish_list[i].getFishData().getGenesis(),
+                fish_list[i].getFishData().getLifetime()
+            ]
+            self.grid.addWidget(FishFrame(info, self.widget), temp, j)
+            # temp +=1
+            j+=1
+            if j>3:
+                j = 0
+                temp+=1
+
 
     def initUI(self):
 
@@ -126,21 +156,17 @@ class Dashboard(QMainWindow):
 
         num = len(self.fishes)
 
-        j = 0
-
-        temp = 0
-
-        i = 0
-
         font = self.label.font()
 
-        font.setPointSize(20)
+        font.setPointSize(14)
 
         font.setBold(True)
 
         self.label.setFont(font)
 
-        fish_list = self.fishes.getFishes()
+        # self.createFishFrame()
+        
+            
 
         # for r in range(0, num):
 
@@ -190,7 +216,7 @@ class Dashboard(QMainWindow):
 
         self.vbox.addWidget(self.chart_view)
 
-        # self.vbox.addLayout(self.grid)
+        self.vbox.addLayout(self.grid)
 
         self.widget.setLayout(self.vbox)
 

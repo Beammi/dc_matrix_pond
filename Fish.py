@@ -256,5 +256,6 @@ class FishGroup(pygame.sprite.Group):
         fishes = []
         for fish in self.fishes['matrix-fish'].values():
             fishes.append(fish)
+            
 
         return fishes
