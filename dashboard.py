@@ -10,21 +10,8 @@ from PyQt5.QtCore import Qt
 import pyqtgraph as pg
 from PyQt5 import QtGui, QtWidgets, uic
 from PyQt5.QtCore import QSize, Qt
-from PyQt5.QtWidgets import (
-    QApplication,
-    QFrame,
-    QGridLayout,
-    QGroupBox,
-    QHBoxLayout,
-    QLabel,
-    QLineEdit,
-    QMainWindow,
-    QPushButton,
-    QScrollArea,
-    QSlider,
-    QVBoxLayout,
-    QWidget,
-)
+from PyQt5.QtGui import * 
+from PyQt5.QtWidgets import * 
 
 import consts
 from Fish import FishGroup
@@ -149,40 +136,6 @@ class Dashboard(QMainWindow):
                 temp+=1
 
 
-        label_str += f"Pond Pheremone: {pheromone}\n"
-
-        label_str += f"\nConstants:\n Population Limit: {consts.FISHES_POND_LIMIT}\n"
-        label_str += f" Display Limit: {consts.FISHES_DISPLAY_LIMIT}\n"
-        label_str += f" Birth Rate: {consts.BIRTH_RATE}x\n"
-
-        self.label.setText(label_str)
-        self.update_history_graph()
-
-    def update_history_graph(self):
-        population_history = self.fishes.get_population_history()
-
-        for i, (key, data) in enumerate(population_history.items()):
-            x = [d[0] for d in data]
-            y = [d[1] for d in data]
-
-            if key not in self.lines:
-                color = self.colors[i % len(self.colors)]
-                symbol_pen = QtGui.QPen(QtGui.QColor(*color))
-                symbol_pen.setWidth(2)
-                line = pg.PlotDataItem(
-                    x, y, name=key, symbol="o", symbolSize=5, symbolPen=symbol_pen
-                )
-                brush = QtGui.QBrush(QtGui.QColor(*color, 100))
-                line.setFillBrush(brush)
-                line.setFillLevel(0)
-                self.lines[key] = line
-                self.graphWidget.addItem(line)
-            else:
-                line = self.lines[key]
-                line.setData(x, y)
-
-        self.graphWidget.show()
-
     def initUI(self):
 
         self.scroll = (
@@ -248,9 +201,9 @@ class Dashboard(QMainWindow):
         # Add Background colour to white
         self.graphWidget.setBackground("w")
         # Add Title
-        self.graphWidget.setTitle("Pond Population", color="b", size="25pt")
+        self.graphWidget.setTitle("Pond Population", color="b", size="12pt")
         # Add Axis Labels
-        styles = {"color": "#f00", "font-size": "20px"}
+        styles = {"color": "#f00", "font-size": "12px"}
         self.graphWidget.setLabel("left", "Population", **styles)
         self.graphWidget.setLabel("bottom", "Time", **styles)
         # Add legend
@@ -277,11 +230,13 @@ class Dashboard(QMainWindow):
 
         self.scroll.setWidget(self.widget)
 
+        # self.scroll.setWidget(self.graphWidget)
+
         self.setCentralWidget(self.scroll)
 
-        self.setGeometry(0, 290, 600, 1200)
+        self.setGeometry(0, 290, 600, 800)
 
-        self.setWindowTitle("Pond Dashboard")
+        self.setWindowTitle("Dashboard")
 
         self.show()
 
