@@ -220,7 +220,7 @@ class Pond:
 
         running = True
         pygame.time.set_timer(self.UPDATE_EVENT, 1000)
-        pygame.time.set_timer(self.PHEROMONE_EVENT, 5000)
+        pygame.time.set_timer(self.PHEROMONE_EVENT, 15000)
         pygame.time.set_timer(self.SHARK_EVENT, 15000)
 
         while running:
