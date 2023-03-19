@@ -1,6 +1,18 @@
 version: '3.7'
 
 services:
+  app:
+    build: .
+    depends_on:
+      - redis-master
+    command: /bin/bash -c "echo 'Waiting for redis to run..' && sleep 5 && python aquarium.py"
+    volumes:
+      - ./app:/usr/src/app/redis_app/
+    links:
+      - redis-sentinel
+      - redis-sentinel2
+      - redis-sentinel3
+  
   redis-ui:
     image: patrikx3/p3x-redis-ui:latest
     ports:
@@ -16,7 +28,7 @@ services:
       - "./redis-data/.data:/data"
     ports:
       - "6379:6379"
- 
+
   redis-slave:
     image: redis:7.0.8-alpine
     command: redis-server --slaveof redis-master 6379
@@ -24,20 +36,24 @@ services:
       - redis-master
     volumes:
       - "./redis-data/.data-slave:/data"
-     
+
   # Instance 1
   redis-sentinel:
     build: 
       context: ./redis-sentinel
     links:
       - redis-master
- 
+    ports:
+      - "26379:26379"
+
   # Instance 2
   redis-sentinel2:
     build: 
       context: ./redis-sentinel
     links:
       - redis-master
+    ports:
+      - "26380:26379"
  
   # Instance 3
   redis-sentinel3:
@@ -45,3 +61,6 @@ services:
       context: ./redis-sentinel
     links:
       - redis-master
+    ports:
+      - "26381:26379"
+

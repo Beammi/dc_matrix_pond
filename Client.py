@@ -44,15 +44,16 @@ class Client:
         send_handler.start()
 
     def get_msg(self):
-        while self.connected:
-            time.sleep(0.5)
-            msg: Payload = pickle.loads(self.client.recv(MSG_SIZE))
-            print(f"received msg: {msg.action}, {msg.data}")
-            if msg:
-                self.messageQ.append(msg)
-                self.handle_msg(msg)
-            else:
-                break
+        return
+        # while self.connected:
+        #     time.sleep(0.5)
+        #     msg: Payload = pickle.loads(self.client.recv(MSG_SIZE))
+        #     print(f"received msg: {msg.action}, {msg.data}")
+        #     if msg:
+        #         self.messageQ.append(msg)
+        #         self.handle_msg(msg)
+        #     else:
+        #         break
 
     def connect(self):
         try:
@@ -87,7 +88,7 @@ class Client:
         return True
 
     def _migrate_fish(self, fishData, destination):
-        ### Migration takes a special object for the payload to pickup : The destination pond's name
+        # Migration takes a special object for the payload to pickup : The destination pond's name
         try:
 
             migration = {"destination": destination, "fish": fishData}
@@ -96,7 +97,7 @@ class Client:
 
             self.client.send(pickle.dumps(self.payload))
             print("=======MIGRATED=======")
-            ### Handle our fish in the pond
+            # Handle our fish in the pond
             # // TO BE IMPLEMENTED
 
             # msg =  pickle.loads(self.client.recv(MSG_SIZE))

@@ -1,0 +1,7 @@
+pygame
+PyQt5
+pyqtgraph
+PyQtChart
+PyQtChart-Qt5
+redis
+matplotlib
