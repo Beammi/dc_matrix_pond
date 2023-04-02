@@ -29,7 +29,8 @@ def connect_to_redis(
 ) -> Union[redis.StrictRedis, None]:
     for i in range(retries):
         try:
-            r = redis.StrictRedis(host=host, port=port, password=password, db=db)
+            r = redis.StrictRedis(host=host, port=port,
+                                  password=password, db=db)
             if r.ping():
                 log.info(f"Connected to Redis at {host}:{port}")
                 return r
@@ -53,8 +54,9 @@ def connect_to_redis(
 
 # Fish transporter from/to redis
 class FishStore:
-    def __init__(self, redis):
+    def __init__(self, redis, db_i):
         self.redis: redis.StrictRedis = redis
+        self.db_i = db_i
 
     def add_fish(self, fish: FishData):
         self.redis.set(fish.getId(), pickle.dumps(fish), ex=fish.getLifetime())
@@ -77,14 +79,14 @@ class FishStore:
         return dict(zip(fish_ids, fishes))
 
     def set_pheromone(self, pheromone: int):
-        self.redis.select(1)
+        self.redis.select(self.db_i+1)
         self.redis.set("pheromone", pheromone)
-        self.redis.select(0)
+        self.redis.select(self.db_i)
 
     def get_pheromone(self) -> int:
-        self.redis.select(1)
+        self.redis.select(self.db_i+1)
         pheromone = self.redis.get("pheromone")
-        self.redis.select(0)
+        self.redis.select(self.db_i)
         return int(pheromone) if pheromone is not None else 0
 
 

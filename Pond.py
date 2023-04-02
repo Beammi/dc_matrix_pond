@@ -2,8 +2,10 @@
 import random
 import sys
 import threading
-from random import randint
+from random import randint, choice
 from typing import Union
+from vivisystem.client import VivisystemClient
+from vivisystem.models import VivisystemPond, VivisystemFish, EventType
 
 import pygame
 from PyQt5 import QtGui, QtWidgets, uic
@@ -22,7 +24,6 @@ from PyQt5.QtWidgets import (
 )
 
 import consts
-from Client import Client
 
 # from run import Dashboard
 from dashboard import Dashboard
@@ -30,21 +31,20 @@ from Fish import Fish, FishGroup
 from FishData import FishData
 from FishStore import FishStore
 from pondDashboard import PondDashboard
-from PondData import PondData
 
 
 class Pond:
-    def __init__(self, fishStore: FishStore, name="matrix-fish"):
+    def __init__(self, fishStore: FishStore, vivi_client: VivisystemClient, name="matrix-fish"):
         pygame.init()
         self.name = name
         self.fish_group = FishGroup()
-        self.sharkImage = pygame.image.load("./assets/images/sprites/shark.png")
+        self.sharkImage = pygame.image.load(
+            "./assets/images/sprites/shark.png")
         self.sharkImage = pygame.transform.scale(self.sharkImage, (128, 128))
-        self.msg = ""
-        self.pondData = PondData(self.name)
-        self.network = None
         self.sharkTime = 0
         self.displayShark = False
+        self.vivi_client = vivi_client
+        self.connected_ponds = {}
         self.fishStore: FishStore = fishStore
         self.pheromone = self.fishStore.get_pheromone()
 
@@ -52,6 +52,7 @@ class Pond:
         self.UPDATE_EVENT = pygame.USEREVENT + 1
         self.PHEROMONE_EVENT = pygame.USEREVENT + 2
         self.SHARK_EVENT = pygame.USEREVENT + 3
+        self.SEND_STATUS_EVENT = pygame.USEREVENT + 4
 
         for fish in self.fishStore.get_fishes().values():
             self.fish_group.add_fish(fish)
@@ -73,7 +74,8 @@ class Pond:
     #     fish.die()
 
     def spawnFish(self, parentFish: Fish = None):
-        tempFish = Fish(100, 100, self.name, parentFish.getId() if parentFish else "-")
+        tempFish = Fish(100, 100, self.name, parentFish.getId()
+                        if parentFish else "-")
         self.fishStore.add_fish(tempFish.fishData)
         self.fish_group.add_fish(tempFish)
 
@@ -89,13 +91,10 @@ class Pond:
         # self.pondData.addFish(newFishData.fishData)
         self.fishStore.add_fish(fish.fishData)
         self.fish_group.add_fish(fish)
-        self.network.pond = self.pondData
 
     def removeFish(self, fish: Fish):
         print("---------------------------FISH SHOULD BE REMOVED-------------------------")
         print(fish.getId())
-        self.pondData.removeFish(fish.getId())
-        self.network.pond = self.pondData
         self.fish_group.remove_fish(fish.getGenesis(), fish.getId())
         fish.die()
 
@@ -117,79 +116,56 @@ class Pond:
             # self.pondData.addFish( newFish.fishData)
             self.pheromone -= f.fishData.crowdThreshold // 2
 
-        self.pondData.setFish(f.fishData)
-
         # Other pond exists
-        if len(self.network.other_ponds.keys()) > 0:
+        if self.connected_ponds:
             # print( f.getId(), f.in_pond_sec)
             if f.getGenesis() != self.name and f.in_pond_sec >= 5 and not f.gaveBirth:
-                newFish = Fish(50, randint(50, 650), f.fishData.genesis, f.fishData.id)
+                newFish = Fish(50, randint(50, 650),
+                               f.fishData.genesis, f.fishData.id)
                 self.addFish(newFish)
-                newFish.giveBirth()  ## not allow baby fish to breed
+                newFish.giveBirth()  # not allow baby fish to breed
                 print("ADD FISH MIGRATED IN POND FOR 5 SECS")
                 f.giveBirth()
 
-                # self.pondData.addFish( newFish.fishData )
             if f.getGenesis() == self.name and f.in_pond_sec <= 15:
-                if random.getrandbits(1):
-                    # print('OTHER POND >>> ',self.network.other_ponds.keys())
-                    if self.network.migrate_random(f.fishData):
-                        self.removeFish(f)
-
-                    # self.network.migrate_fish(f, dest)
-                    # self.pondData.migrateFish(f.getId())
-                    # parent = None
-                    # if f.fishData.parentId:
-                    #     parent = f.fishData.parentId
-                    # for ind2, f2 in enumerate(self.fishes.values()):
-                    #     if (
-                    #         parent
-                    #         and f2.fishData.parentId == parent
-                    #         or f2.fishData.parentId == f.getId()
-                    #     ):
-                    #         self.migrateFish(ind2, dest)
-                    #         # self.network.migrate_fish( f2, dest)
-                    #         # self.pondData.migrateFish(f2.getId())
-                    #         break
-
+                pass
             elif f.getGenesis() == self.name and f.in_pond_sec >= 15:
-                if self.network.migrate_random(f.fishData):
+                if self.connected_ponds:
+                    random_pond = random.choice(list(self.connected_ponds))
+                    self.vivi_client.migrate_fish(
+                        random_pond, f.toVivisystemFish())
                     self.removeFish(f)
-
-                # self.network.migrate_fish(f, dest)
-                # self.pondData.migrateFish(f.getId())
-                # parent = None
-                # if f.fishData.parentId:
-                #     parent = f.fishData.parentId
-                # for ind2, f2 in enumerate(self.fishes.values()):
-                #     if (
-                #         parent
-                #         and f2.fishData.parentId == parent
-                #         or f2.fishData.parentId == f.getId()
-                #     ):
-                #         self.migrateFish(ind2, dest)
-                #         # self.network.migrate_fish( f2, dest)
-                #         # self.pondData.migrateFish(f2.getId())
-                #         break
             else:
                 if self.getPopulation() > f.getCrowdThresh():
-                    if self.network.migrate_random(f.fishData):
-                        self.removeFish(f)
-                    # self.network.migrate_fish(f, dest )
-                    # self.pondData.migrateFish( f.fishData.id )
-                    return
+                    random_pond = random.choice(list(self.connected_ponds))
+                    self.vivi_client.migrate_fish(
+                        random_pond, f.toVivisystemFish())
+                    self.removeFish(f)
 
         if injectPheromone:
             self.pheromoneCloud()
-        # print("Client send :",self.pondData)
-        self.network.pond = self.pondData
 
-    def handle_migrate(self, fish_data: FishData):
-        fish_data.random_pos()
-        fish = Fish(data=fish_data)
+    def handle_migrate(self, fish: VivisystemFish):
+        fish = Fish.fromVivisystemFish(fish)
         self.addFish(fish)
 
+    def handle_status(self, pond: VivisystemPond):
+        self.connected_ponds[pond.name] = pond
+
+    def handle_disconnect(self, pond_name: str):
+        if pond_name in self.connected_ponds:
+            del self.connected_ponds[pond_name]
+            print(pond_name, "Disconnected")
+
     def run(self):
+        mapHandler = {
+            EventType.MIGRATE: self.handle_migrate,
+            EventType.STATUS: self.handle_status,
+            EventType.DISCONNECT: self.handle_disconnect
+        }
+        for event, handler in mapHandler.items():
+            self.vivi_client.handle_event(event, handler)
+
         # General setup
         direction = 1
         speed_x = 3
@@ -199,7 +175,6 @@ class Pond:
         dashboard: Union[None, Dashboard] = None
         vivisystem_dashboard: Union[None, PondDashboard] = None
 
-        self.network = Client(self.pondData, handle_migrate=self.handle_migrate)
         # lifetime_handler = threading.Thread(target=self.network.handle_lifetime)
         # lifetime_handler.start()
 
@@ -220,6 +195,7 @@ class Pond:
 
         running = True
         pygame.time.set_timer(self.UPDATE_EVENT, 1000)
+        pygame.time.set_timer(self.SEND_STATUS_EVENT, 2000)
         pygame.time.set_timer(self.PHEROMONE_EVENT, 15000)
         pygame.time.set_timer(self.SHARK_EVENT, 15000)
 
@@ -237,7 +213,6 @@ class Pond:
                     pygame.time.set_timer(self.UPDATE_EVENT, 0)
                     pygame.time.set_timer(self.PHEROMONE_EVENT, 0)
                     pygame.time.set_timer(self.SHARK_EVENT, 0)
-                    self.network.disconnect()
                 elif event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_RIGHT:
                         # print(self.fishes[0].getId())
@@ -266,6 +241,9 @@ class Pond:
                     #     self.removeFish(deadFish)
                     #     deadFish.die()
                     #     start_time = pygame.time.get_ticks()
+                elif event.type == self.SEND_STATUS_EVENT:
+                    self.vivi_client.send_status(VivisystemPond(
+                        name=self.name, pheromone=self.pheromone, total_fishes=self.getPopulation()))
 
             if dashboard:
                 dashboard.update_dashboard(self.pheromone)

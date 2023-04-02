@@ -16,30 +16,30 @@ from PyQt5.QtWidgets import (
     QWidget,
 )
 
-from Client import Client
 from pondFrame import PondFrame
 import matplotlib.pyplot as plt
 import pyqtgraph as pg
 from pyqtgraph.Qt import QtCore, QtGui
 import numpy as np
 
+
 class PondDashboard(QMainWindow):
-    def __init__(self, client, allPond=None):
+    def __init__(self):
         super().__init__()
-        self.client: Client = client
-        self.ponds = allPond
+        self.connected_ponds = {}
         self.label = QLabel(self)
         self.update_dashboard()
         self.initUI()
 
-    def update_dashboard(self):
+    def update_dashboard(self, connected_ponds):
+		self.connected_ponds = connected_ponds
         self.label.setText(f"Connected ponds: {self.client.other_ponds}")
-    
+
     def graph(self):
-        matrix_pond = [1,2,5]
-        otherpond = [0,len(self.client.other_ponds),]
-        time = list(range(0,len(matrix_pond)))
-        plt.plot(time,matrix_pond)
+        matrix_pond = [1, 2, 5]
+        otherpond = [0, len(self.client.other_ponds), ]
+        time = list(range(0, len(matrix_pond)))
+        plt.plot(time, matrix_pond)
 
         plt.xlabel("Time")
         plt.ylabel("Amount of Fish")
@@ -48,23 +48,23 @@ class PondDashboard(QMainWindow):
         plt.show()
 
     def graph_pyqt(self):
-        matrix_pond = [1,2,5]
-        otherpond = [0,len(self.client.other_ponds),3]
-        time = list(range(0,len(matrix_pond)))
+        matrix_pond = [1, 2, 5]
+        otherpond = [0, len(self.client.other_ponds), 3]
+        time = list(range(0, len(matrix_pond)))
         plot = pg.plot()
-        plot.showGrid(x = True, y = True)
+        plot.showGrid(x=True, y=True)
         plot.addLegend()
         # setting horizontal range
         plt.setXRange(0, 10)
- 
+
         # setting vertical range
         plt.setYRange(0, 20)
- 
+
         # setting window title to the plot window
         plt.setWindowTitle("Pond Dashboard")
 
-        matrix_pond_line = plot.plot(time,matrix_pond)
-        otherpond_line = plot.plot(time,otherpond)
+        matrix_pond_line = plot.plot(time, matrix_pond)
+        otherpond_line = plot.plot(time, otherpond)
 
     def initUI(self):
 

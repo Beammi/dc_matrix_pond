@@ -1,20 +1,20 @@
 import os
 import sys
-
+from vivisystem.client import VivisystemClient
+from Pond import Pond
 from FishStore import FishStore, connect_to_redis
 
 # from src.Fish import Fish
-from Pond import Pond
 
 os.environ["SDL_VIDEO_WINDOW_POS"] = "%d,%d" % (1000, 290)
 
 if __name__ == "__main__":
     pond_name = sys.argv[1] if len(sys.argv) > 1 else "matrix-fish"
-    # for testing, comment below if want to use same db
-    # db = 0 if pond_name == "matrix-fish" else 1
-    r = connect_to_redis()
-    fishStore = FishStore(r)
-    pond = Pond(fishStore=fishStore, name=pond_name)
+    db_i = int(sys.argv[2]) if len(sys.argv) > 1 and len(sys.argv) > 2 else 0
+    r = connect_to_redis(db=db_i)
+    fishStore = FishStore(r, db_i=db_i)
+    vivi_client = VivisystemClient("ws://localhost:5000", pond_id=pond_name)
+    pond = Pond(fishStore=fishStore, vivi_client=vivi_client, name=pond_name)
     pond.run()
 
     # rest of your code here
