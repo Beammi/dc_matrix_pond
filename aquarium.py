@@ -1,8 +1,9 @@
 import os
 import sys
-from vivisystem.client import VivisystemClient
-from Pond import Pond
+
 from FishStore import FishStore, connect_to_redis
+from Pond import Pond
+from vivisystem.client import VivisystemClient
 
 # from src.Fish import Fish
 
@@ -13,7 +14,7 @@ if __name__ == "__main__":
     db_i = int(sys.argv[2]) if len(sys.argv) > 1 and len(sys.argv) > 2 else 0
     r = connect_to_redis(db=db_i)
     fishStore = FishStore(r, db_i=db_i)
-    vivi_client = VivisystemClient("ws://localhost:5000", pond_id=pond_name)
+    vivi_client = VivisystemClient("ws://subpono.serveo.net", pond_id=pond_name)
     pond = Pond(fishStore=fishStore, vivi_client=vivi_client, name=pond_name)
     pond.run()
 

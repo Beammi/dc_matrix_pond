@@ -21,7 +21,9 @@ def randPheromoneThresh():
 
 
 class FishData:
-    def __init__(self, genesis, lifetime=None, parentId=None, crowdThreshold=None, pheromoneThreshold=None):
+    def __init__(
+        self, genesis, lifetime=None, parentId=None, crowdThreshold=None, pheromoneThreshold=None
+    ):
         self.id = randId()
         self.state = "in-pond"
         self.status = "alive"
@@ -32,6 +34,7 @@ class FishData:
         self.lifetime = lifetime or 60
         self.parentId = parentId or randId()
         self.x, self.y = random.randint(50, 650), random.randint(50, 650)
+        self.is_agent = False
         self.timestamp = datetime.datetime.now()
 
     def random_pos(self):
@@ -55,7 +58,7 @@ class FishData:
 
     def getStatus(self):
         if self.getLifeTimeLeft == 0:
-            self.status = 'dead'
+            self.status = "dead"
         return self.status
 
     def getGenesis(self):

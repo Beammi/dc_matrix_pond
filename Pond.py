@@ -2,10 +2,8 @@
 import random
 import sys
 import threading
-from random import randint, choice
+from random import choice, randint
 from typing import Union
-from vivisystem.client import VivisystemClient
-from vivisystem.models import VivisystemPond, VivisystemFish, EventType
 
 import pygame
 from PyQt5 import QtGui, QtWidgets, uic
@@ -31,6 +29,8 @@ from Fish import Fish, FishGroup
 from FishData import FishData
 from FishStore import FishStore
 from pondDashboard import PondDashboard
+from vivisystem.client import VivisystemClient
+from vivisystem.models import EventType, VivisystemFish, VivisystemPond
 
 
 class Pill(pygame.sprite.Sprite):
@@ -58,9 +58,7 @@ class Pill(pygame.sprite.Sprite):
 
 
 class Pond:
-    def __init__(
-        self, fishStore: FishStore, vivi_client: VivisystemClient, name="matrix-fish"
-    ):
+    def __init__(self, fishStore: FishStore, vivi_client: VivisystemClient, name="matrix-fish"):
         pygame.init()
         self.name = name
         self.fish_group = FishGroup()
@@ -117,9 +115,7 @@ class Pond:
         self.fish_group.add_fish(fish)
 
     def removeFish(self, fish: Fish):
-        print(
-            "---------------------------FISH SHOULD BE REMOVED-------------------------"
-        )
+        print("---------------------------FISH SHOULD BE REMOVED-------------------------")
         print(fish.getId())
         self.fish_group.remove_fish(fish.getGenesis(), fish.getId())
         fish.die()
@@ -292,7 +288,7 @@ class Pond:
                     if pill.color == "red":
                         self.removeFish(fish)
                     else:
-                        print("turn fish into agent")
+                        fish.set_is_agent(True)
                     pill.kill()
 
             self.fish_group.draw(screen)

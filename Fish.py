@@ -13,7 +13,8 @@ from vivisystem.models import VivisystemFish
 POND_ASSETS_PATH = "./assets/images/sprites"
 
 # define list of ponds assets
-available_pond_assets = {"local-pond", "foreign-pond"}
+available_pond_assets = {"local-pond", "local-pond-agent", "foreign-pond"}
+agent_path = "local-pond-agent"
 # pond_path: ([left sprites], [right sprites])
 pond_sprites_container = {p: ([], []) for p in available_pond_assets}
 
@@ -78,13 +79,24 @@ class Fish(pygame.sprite.Sprite):
 
     @classmethod
     def fromVivisystemFish(cls, fish: VivisystemFish):
-        fish_data = FishData(fish.genesis, fish.lifetime, fish.parent_id,
-                             fish.crowd_threshold, fish.pheromone_threshold)
+        fish_data = FishData(
+            fish.genesis,
+            fish.lifetime,
+            fish.parent_id,
+            fish.crowd_threshold,
+            fish.pheromone_threshold,
+        )
         return cls(data=fish_data)
 
     def toVivisystemFish(self) -> VivisystemFish:
-        return VivisystemFish(fish_id=self.getId(), parent_id=self.fishData.getId(), genesis=self.fishData.getGenesis(), crowd_threshold=self.getCrowdThresh(),
-                              pheromone_threshold=self.fishData.pheromoneThresh, lifetime=self.getLifetime())
+        return VivisystemFish(
+            fish_id=self.getId(),
+            parent_id=self.fishData.getId(),
+            genesis=self.fishData.getGenesis(),
+            crowd_threshold=self.getCrowdThresh(),
+            pheromone_threshold=self.fishData.pheromoneThresh,
+            lifetime=self.getLifetime(),
+        )
 
     def getFishData(self):
         return self.fishData
@@ -100,6 +112,11 @@ class Fish(pygame.sprite.Sprite):
 
     def die(self):
         self.kill()
+
+    def set_is_agent(self, is_agent):
+        self.fishData.is_agent = is_agent
+        if is_agent:
+            self.loadSprite()
 
     def flipSprite(self):
 
@@ -119,6 +136,9 @@ class Fish(pygame.sprite.Sprite):
             path = "foreign-pond"
         elif self.fishData.genesis in available_pond_assets:
             path = self.fishData.genesis
+
+        if self.fishData.is_agent:
+            path = agent_path
 
         self.sprites = pond_sprites_container[path][0]
         self.leftSprite = pond_sprites_container[path][1]
@@ -198,8 +218,7 @@ class FishGroup(pygame.sprite.Group):
         self.last_updated_time = time.time()
 
         # self.population_history['matrix-fish'] = [(timestamp, count), ...]
-        self.population_history: DefaultDict[str,
-                                             List[List[tuple]]] = defaultdict(list)
+        self.population_history: DefaultDict[str, List[List[tuple]]] = defaultdict(list)
 
     def add_fish(self, fish: Fish):
         self.fishes[fish.getGenesis()][fish.getId()] = fish
@@ -226,15 +245,13 @@ class FishGroup(pygame.sprite.Group):
     def update_percentages(self):
         for genesis in self.fishes.keys():
             total = self.get_total()
-            self.percentage[genesis] = len(
-                self.fishes[genesis]) / total if total > 0 else 0
+            self.percentage[genesis] = len(self.fishes[genesis]) / total if total > 0 else 0
 
     def update_population_history(self, current_time):
         if current_time - self.last_updated_time <= 2:
             return
         for genesis in self.fishes.keys():
-            self.population_history[genesis].append(
-                (current_time, len(self.fishes[genesis])))
+            self.population_history[genesis].append((current_time, len(self.fishes[genesis])))
         self.last_updated_time = current_time
 
     def get_population_history(self):
@@ -268,6 +285,6 @@ class FishGroup(pygame.sprite.Group):
 
     def getFishes(self):
         fishes = []
-        for fish in self.fishes['matrix-fish'].values():
+        for fish in self.fishes["matrix-fish"].values():
             fishes.append(fish)
         return fishes
