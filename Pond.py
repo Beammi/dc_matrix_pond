@@ -74,8 +74,9 @@ class Pond:
         # EVENTS
         self.UPDATE_EVENT = pygame.USEREVENT + 1
         self.PHEROMONE_EVENT = pygame.USEREVENT + 2
-        self.SHARK_EVENT = pygame.USEREVENT + 3
+        self.SPAWN_FISH_EVENT = pygame.USEREVENT + 3
         self.SEND_STATUS_EVENT = pygame.USEREVENT + 4
+        self.PILL_EVENT = pygame.USEREVENT + 5
 
         for fish in self.fishStore.get_fishes().values():
             self.fish_group.add_fish(fish)
@@ -210,18 +211,15 @@ class Pond:
         self.spawnFish()
 
         app = QApplication(sys.argv)
-        other_pond_list = []
-
-        PILL_EVENT = pygame.USEREVENT + 5
 
         pill_group = pygame.sprite.Group()
 
         running = True
         pygame.time.set_timer(self.UPDATE_EVENT, 1000)
+        pygame.time.set_timer(self.SPAWN_FISH_EVENT, 3000)  # spawn local fish
         pygame.time.set_timer(self.SEND_STATUS_EVENT, 2000)
-        pygame.time.set_timer(PILL_EVENT, 3000)
+        pygame.time.set_timer(self.PILL_EVENT, 3000)
         pygame.time.set_timer(self.PHEROMONE_EVENT, 15000)
-        pygame.time.set_timer(self.SHARK_EVENT, 15000)
 
         while running:
             #   if len(self.fishes) > 100000:
@@ -236,7 +234,6 @@ class Pond:
                     running = False
                     pygame.time.set_timer(self.UPDATE_EVENT, 0)
                     pygame.time.set_timer(self.PHEROMONE_EVENT, 0)
-                    pygame.time.set_timer(self.SHARK_EVENT, 0)
                 elif event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_RIGHT:
                         # print(self.fishes[0].getId())
@@ -252,14 +249,12 @@ class Pond:
                 elif event.type == self.PHEROMONE_EVENT:
                     # pregnant_time?
                     self.pheromoneCloud()
-                elif event.type == PILL_EVENT:
+                elif event.type == self.PILL_EVENT:
                     print("Pill shit")
                     pill_color = random.choice(["blue", "red"])
-                    pill_speed = 3
                     pill_x = random.randint(0, screen.get_width() - 20)
                     pill = Pill(pill_color, pill_x, 0)
                     pill_group.add(pill)
-
                 elif event.type == self.SEND_STATUS_EVENT:
                     self.vivi_client.send_status(
                         VivisystemPond(
@@ -268,6 +263,8 @@ class Pond:
                             total_fishes=self.getPopulation(),
                         )
                     )
+                elif event.type == self.SPAWN_FISH_EVENT:
+                    self.spawnFish()
 
             if dashboard:
                 dashboard.update_dashboard(self.pheromone)

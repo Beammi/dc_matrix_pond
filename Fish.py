@@ -46,6 +46,9 @@ def load_sprites():
 
 load_sprites()
 
+SCREEN_WIDTH = 1180
+SCREEN_HEIGHT = 300
+
 
 class Fish(pygame.sprite.Sprite):
     def __init__(
@@ -57,7 +60,6 @@ class Fish(pygame.sprite.Sprite):
         # swimming controller
         self.direction = "RIGHT"
         self.face = 1
-        self.attack_animation = False
         self.sprites = []  # Main sprite
         self.leftSprite = []
         self.rightSprite = []
@@ -76,6 +78,11 @@ class Fish(pygame.sprite.Sprite):
         self.in_pond_sec = 0
         self.gaveBirth = False
         self.speed = float(random.randrange(5, 20)) / 100
+
+        self.timer = 0
+        self.speed_x = 2
+        self.speed_y = 1
+        self.change_dir_timer = random.randint(60, 180)
 
     @classmethod
     def fromVivisystemFish(cls, fish: VivisystemFish):
@@ -152,21 +159,30 @@ class Fish(pygame.sprite.Sprite):
                 self.current_sprite = 0
         self.image = self.sprites[int(self.current_sprite)]
 
-    def move(self, speed_x):
-        if self.rect.left <= 0:
-            self.face = 1
-            self.flipSprite()
-        elif self.rect.left >= 1180:
-            self.face = -1
+    def move(self):
+        self.timer += 1
+        if self.timer >= 60:  # Change direction every 60 frames (1 second)
+            self.timer = 0
+            self.face = random.choice([-1, 1])
+            self.speed_x = random.randint(1, 5) * self.face
+            self.speed_y = random.randint(-2, 2)
             self.flipSprite()
 
-        speed_x = random.randint(1, 5) * self.face
+        if self.rect.left <= 0 or self.rect.right >= SCREEN_WIDTH:
+            self.face = -self.face
+            self.speed_x = -self.speed_x
+            self.flipSprite()
 
-        self.rect.x += speed_x
+        if self.rect.top <= 0 or self.rect.bottom >= SCREEN_HEIGHT:
+            self.speed_y = -self.speed_y
+
+        self.rect.x += self.speed_x
+        self.rect.y += self.speed_y
+
         self.update_ani()
 
     def update(self):
-        self.move(3)
+        self.move()
 
     def increasePheromone(self, n):
         self.fishData.pheromone += n
