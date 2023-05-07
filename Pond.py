@@ -33,13 +33,38 @@ from FishStore import FishStore
 from pondDashboard import PondDashboard
 
 
+class Pill(pygame.sprite.Sprite):
+    def __init__(self, color, x, y):
+        super().__init__()
+        self.color = color
+        self.image = pygame.Surface([10, 10])
+        self.image.fill(color)
+        self.rect = self.image.get_rect()
+        self.rect.x = x
+        self.rect.y = y
+        self.fallen = False
+
+    def update(self):
+        if not self.fallen:
+            self.rect.y += 5
+            if self.rect.y > 720:
+                self.kill()
+        else:
+            self.rect.x += random.randint(-5, 5)
+            self.rect.y += random.randint(-5, 5)
+
+    def fall(self):
+        self.fallen = True
+
+
 class Pond:
-    def __init__(self, fishStore: FishStore, vivi_client: VivisystemClient, name="matrix-fish"):
+    def __init__(
+        self, fishStore: FishStore, vivi_client: VivisystemClient, name="matrix-fish"
+    ):
         pygame.init()
         self.name = name
         self.fish_group = FishGroup()
-        self.sharkImage = pygame.image.load(
-            "./assets/images/sprites/shark.png")
+        self.sharkImage = pygame.image.load("./assets/images/sprites/shark.png")
         self.sharkImage = pygame.transform.scale(self.sharkImage, (128, 128))
         self.sharkTime = 0
         self.displayShark = False
@@ -74,8 +99,7 @@ class Pond:
     #     fish.die()
 
     def spawnFish(self, parentFish: Fish = None):
-        tempFish = Fish(100, 100, self.name, parentFish.getId()
-                        if parentFish else "-")
+        tempFish = Fish(100, 100, self.name, parentFish.getId() if parentFish else "-")
         self.fishStore.add_fish(tempFish.fishData)
         self.fish_group.add_fish(tempFish)
 
@@ -93,7 +117,9 @@ class Pond:
         self.fish_group.add_fish(fish)
 
     def removeFish(self, fish: Fish):
-        print("---------------------------FISH SHOULD BE REMOVED-------------------------")
+        print(
+            "---------------------------FISH SHOULD BE REMOVED-------------------------"
+        )
         print(fish.getId())
         self.fish_group.remove_fish(fish.getGenesis(), fish.getId())
         fish.die()
@@ -120,8 +146,7 @@ class Pond:
         if self.connected_ponds:
             # print( f.getId(), f.in_pond_sec)
             if f.getGenesis() != self.name and f.in_pond_sec >= 5 and not f.gaveBirth:
-                newFish = Fish(50, randint(50, 650),
-                               f.fishData.genesis, f.fishData.id)
+                newFish = Fish(50, randint(50, 650), f.fishData.genesis, f.fishData.id)
                 self.addFish(newFish)
                 newFish.giveBirth()  # not allow baby fish to breed
                 print("ADD FISH MIGRATED IN POND FOR 5 SECS")
@@ -132,14 +157,12 @@ class Pond:
             elif f.getGenesis() == self.name and f.in_pond_sec >= 15:
                 if self.connected_ponds:
                     random_pond = random.choice(list(self.connected_ponds))
-                    self.vivi_client.migrate_fish(
-                        random_pond, f.toVivisystemFish())
+                    self.vivi_client.migrate_fish(random_pond, f.toVivisystemFish())
                     self.removeFish(f)
             else:
                 if self.getPopulation() > f.getCrowdThresh():
                     random_pond = random.choice(list(self.connected_ponds))
-                    self.vivi_client.migrate_fish(
-                        random_pond, f.toVivisystemFish())
+                    self.vivi_client.migrate_fish(random_pond, f.toVivisystemFish())
                     self.removeFish(f)
 
         if injectPheromone:
@@ -161,7 +184,7 @@ class Pond:
         mapHandler = {
             EventType.MIGRATE: self.handle_migrate,
             EventType.STATUS: self.handle_status,
-            EventType.DISCONNECT: self.handle_disconnect
+            EventType.DISCONNECT: self.handle_disconnect,
         }
         for event, handler in mapHandler.items():
             self.vivi_client.handle_event(event, handler)
@@ -193,9 +216,14 @@ class Pond:
         app = QApplication(sys.argv)
         other_pond_list = []
 
+        PILL_EVENT = pygame.USEREVENT + 5
+
+        pill_group = pygame.sprite.Group()
+
         running = True
         pygame.time.set_timer(self.UPDATE_EVENT, 1000)
         pygame.time.set_timer(self.SEND_STATUS_EVENT, 2000)
+        pygame.time.set_timer(PILL_EVENT, 3000)
         pygame.time.set_timer(self.PHEROMONE_EVENT, 15000)
         pygame.time.set_timer(self.SHARK_EVENT, 15000)
 
@@ -220,7 +248,7 @@ class Pond:
                         pond_handler = threading.Thread(target=app.exec_)
                         pond_handler.start()
                     elif event.key == pygame.K_LEFT:
-                        vivisystem_dashboard = PondDashboard(self.network)
+                        vivisystem_dashboard = PondDashboard()
                         pond_handler = threading.Thread(target=app.exec_)
                         pond_handler.start()
                 elif event.type == self.UPDATE_EVENT:
@@ -228,22 +256,22 @@ class Pond:
                 elif event.type == self.PHEROMONE_EVENT:
                     # pregnant_time?
                     self.pheromoneCloud()
-                elif event.type == self.SHARK_EVENT:
-                    pass
-                    # if len(self.fishes) > 4:
-                    #     deadFish = self.randomFish()
-                    #     screen.blit(
-                    #         self.sharkImage, (deadFish.getFishx() + 30, deadFish.getFishy())
-                    #     )
-                    #     pygame.display.flip()
-                    #     pygame.event.pump()
-                    #     pygame.time.delay(500)
-                    #     self.removeFish(deadFish)
-                    #     deadFish.die()
-                    #     start_time = pygame.time.get_ticks()
+                elif event.type == PILL_EVENT:
+                    print("Pill shit")
+                    pill_color = random.choice(["blue", "red"])
+                    pill_speed = 3
+                    pill_x = random.randint(0, screen.get_width() - 20)
+                    pill = Pill(pill_color, pill_x, 0)
+                    pill_group.add(pill)
+
                 elif event.type == self.SEND_STATUS_EVENT:
-                    self.vivi_client.send_status(VivisystemPond(
-                        name=self.name, pheromone=self.pheromone, total_fishes=self.getPopulation()))
+                    self.vivi_client.send_status(
+                        VivisystemPond(
+                            name=self.name,
+                            pheromone=self.pheromone,
+                            total_fishes=self.getPopulation(),
+                        )
+                    )
 
             if dashboard:
                 dashboard.update_dashboard(self.pheromone)
@@ -251,10 +279,24 @@ class Pond:
                 vivisystem_dashboard.update_dashboard()
 
             self.fish_group.update_display()
+            pill_group.update()
 
             screen.fill((0, 0, 0))
             screen.blit(bg, [0, 0])
+
+            pill_fish_collisions = pygame.sprite.groupcollide(
+                pill_group, self.fish_group, False, False
+            )
+            for pill, fish_list in pill_fish_collisions.items():
+                for fish in fish_list:
+                    if pill.color == "red":
+                        self.removeFish(fish)
+                    else:
+                        print("turn fish into agent")
+                    pill.kill()
+
             self.fish_group.draw(screen)
+            pill_group.draw(screen)
 
             pygame.display.flip()
             clock.tick(60)
