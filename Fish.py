@@ -13,7 +13,7 @@ from vivisystem.models import VivisystemFish
 POND_ASSETS_PATH = "./assets/images/sprites"
 
 # define list of ponds assets
-available_pond_assets = {"local-pond", "local-pond-agent", "foreign-pond"}
+available_pond_assets = {"local-pond", "local-pond-agent", "foreign-pond", "mega-pond", "doo-pond"}
 agent_path = "local-pond-agent"
 # pond_path: ([left sprites], [right sprites])
 pond_sprites_container = {p: ([], []) for p in available_pond_assets}
