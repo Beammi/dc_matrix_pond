@@ -22,22 +22,23 @@ import pyqtgraph as pg
 from pyqtgraph.Qt import QtCore, QtGui
 import numpy as np
 
-
 class PondDashboard(QMainWindow):
-    def __init__(self):
+    def __init__(self,connected_pond):
         super().__init__()
-        self.connected_ponds = {}
+        # self.connected_ponds = VivisystemClient("http://127.0.0.1:5000","matrix-pond")
+        self.connected_ponds = connected_pond
         self.label = QLabel(self)
         self.update_dashboard()
         self.initUI()
 
-    def update_dashboard(self, connected_ponds):
-        self.connected_ponds = connected_ponds
-        self.label.setText(f"Connected ponds: {self.client.other_ponds}")
+    def update_dashboard(self):
+        # self.connected_ponds = connected_ponds
+        temp = self.connected_ponds.values()
+        self.label.setText(f"{temp}")
 
     def graph(self):
         matrix_pond = [1, 2, 5]
-        otherpond = [0, len(self.client.other_ponds), ]
+        # otherpond = [0, len(self.client.other_ponds), ]
         time = list(range(0, len(matrix_pond)))
         plt.plot(time, matrix_pond)
 
@@ -77,7 +78,7 @@ class PondDashboard(QMainWindow):
         )  # The Vertical Box that contains the Horizontal Boxes of  labels and buttons
         self.grid = QGridLayout()
         self.graph_button = QPushButton("Graph")
-        self.graph_button.clicked.connect(self.graph)
+        # self.graph_button.clicked.connect(self.graph)
         # temp = ["Fish ID: 123", "State: In Pond", "Status: alive", "Genesis: matrix-fish", "Crowd Threshold: 5/10", "Pheromone Level: 4/5", "Lifetime: 30/60"]
         # print(self.fishe[0].getFishData().getGenesis())
         # num = len(self.fished)
@@ -100,13 +101,17 @@ class PondDashboard(QMainWindow):
         #     temp += 1
 
         font = self.label.font()
-        font.setPointSize(30)
+        font.setPointSize(20)
         font.setBold(True)
         self.label.setFont(font)
+        self.connectLabel = QLabel()
+        self.connectLabel.setText("Connected Ponds:")
+        self.connectLabel.setFont(font)
 
+        self.vbox.addWidget(self.connectLabel)
         self.vbox.addWidget(self.label)
         self.vbox.addLayout(self.grid)
-        self.vbox.addWidget(self.graph_button)
+        # self.vbox.addWidget(self.graph_button)
         self.widget.setLayout(self.vbox)
 
         # Scroll Area Properties

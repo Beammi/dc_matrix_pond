@@ -244,7 +244,7 @@ class Pond:
                         pond_handler = threading.Thread(target=app.exec_)
                         pond_handler.start()
                     elif event.key == pygame.K_LEFT:
-                        vivisystem_dashboard = PondDashboard()
+                        vivisystem_dashboard = PondDashboard(self.connected_ponds)
                         pond_handler = threading.Thread(target=app.exec_)
                         pond_handler.start()
                 elif event.type == self.UPDATE_EVENT:
