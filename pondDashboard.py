@@ -32,7 +32,7 @@ class PondDashboard(QMainWindow):
         self.initUI()
 
     def update_dashboard(self, connected_ponds):
-		self.connected_ponds = connected_ponds
+        self.connected_ponds = connected_ponds
         self.label.setText(f"Connected ponds: {self.client.other_ponds}")
 
     def graph(self):
