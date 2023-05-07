@@ -14,6 +14,7 @@ from PyQt5.QtWidgets import (
     QSlider,
     QVBoxLayout,
     QWidget,
+    QListWidget,
 )
 
 from pondFrame import PondFrame
@@ -28,13 +29,20 @@ class PondDashboard(QMainWindow):
         # self.connected_ponds = VivisystemClient("http://127.0.0.1:5000","matrix-pond")
         self.connected_ponds = connected_pond
         self.label = QLabel(self)
+        self.list_widget = QListWidget(self)
         self.update_dashboard()
         self.initUI()
 
     def update_dashboard(self):
         # self.connected_ponds = connected_ponds
         temp = self.connected_ponds.values()
-        self.label.setText(f"{temp}")
+        self.list_widget.clear()
+        for items in temp:
+            
+            self.list_widget.addItem(str(items))
+        # for items in temp:
+        #     self.label.setText(f"{items}")
+
 
     def graph(self):
         matrix_pond = [1, 2, 5]
@@ -100,6 +108,10 @@ class PondDashboard(QMainWindow):
         #     j = 0
         #     temp += 1
 
+
+
+
+
         font = self.label.font()
         font.setPointSize(20)
         font.setBold(True)
@@ -109,7 +121,8 @@ class PondDashboard(QMainWindow):
         self.connectLabel.setFont(font)
 
         self.vbox.addWidget(self.connectLabel)
-        self.vbox.addWidget(self.label)
+        # self.vbox.addWidget(self.label)
+        self.vbox.addWidget(self.list_widget)
         self.vbox.addLayout(self.grid)
         # self.vbox.addWidget(self.graph_button)
         self.widget.setLayout(self.vbox)
