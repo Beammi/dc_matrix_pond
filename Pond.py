@@ -58,7 +58,7 @@ class Pill(pygame.sprite.Sprite):
 
 
 class Pond:
-    def __init__(self, fishStore: FishStore, vivi_client: VivisystemClient, name="matrix-fish"):
+    def __init__(self, fishStore: FishStore, vivi_client: VivisystemClient, name="matrix-pond"):
         pygame.init()
         self.name = name
         self.fish_group = FishGroup()

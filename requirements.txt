@@ -1,0 +1,8 @@
+redis
+pygame
+PyQt5
+PyQtChart
+pyqtgraph
+websocket-client
+matplotlib
+requests

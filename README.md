@@ -2,7 +2,7 @@
 
 
 ```
-pip install redis
+pip install -r requirements.txt
 ```
 
 # Pond

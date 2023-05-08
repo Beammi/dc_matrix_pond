@@ -9,12 +9,14 @@ from vivisystem.client import VivisystemClient
 
 os.environ["SDL_VIDEO_WINDOW_POS"] = "%d,%d" % (1000, 290)
 
+SERVER_URL = "http://127.0.0.1:5000"
+
 if __name__ == "__main__":
-    pond_name = sys.argv[1] if len(sys.argv) > 1 else "matrix-fish"
+    pond_name = sys.argv[1] if len(sys.argv) > 1 else "matrix-pond"
     db_i = int(sys.argv[2]) if len(sys.argv) > 1 and len(sys.argv) > 2 else 0
     r = connect_to_redis(db=db_i)
     fishStore = FishStore(r, db_i=db_i)
-    vivi_client = VivisystemClient("ws://subpono.serveo.net", pond_id=pond_name)
+    vivi_client = VivisystemClient(SERVER_URL, pond_id=pond_name)
     pond = Pond(fishStore=fishStore, vivi_client=vivi_client, name=pond_name)
     pond.run()
 

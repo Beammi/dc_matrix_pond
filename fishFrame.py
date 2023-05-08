@@ -17,7 +17,7 @@ class FishFrame(QGroupBox):
         pixmap = QPixmap("./assets/images/sprites/local-pond/1.png")
         label = QLabel(self)
 
-        if info[3].lower() == "matrix-fish":
+        if info[3].lower() == "matrix-pond":
             pixmap = QPixmap("./assets/images/sprites/local-pond/1.png")
         elif info[3].lower() == "peem":
             pixmap = QPixmap("./assets/images/sprites/foreign-pond/1.png")

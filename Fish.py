@@ -52,7 +52,7 @@ SCREEN_HEIGHT = 300
 
 class Fish(pygame.sprite.Sprite):
     def __init__(
-        self, pos_x=None, pos_y=None, genesis="matrix-fish", parent=None, data: FishData = None
+        self, pos_x=None, pos_y=None, genesis="matrix-pond", parent=None, data: FishData = None
     ):
         super().__init__()
         self.fishData = data or FishData(genesis, parentId=parent)
@@ -137,7 +137,7 @@ class Fish(pygame.sprite.Sprite):
     def loadSprite(self):
         path = "local-pond"
         if (
-            self.fishData.genesis != "matrix-fish"
+            self.fishData.genesis != "matrix-pond"
             and self.fishData.genesis not in available_pond_assets
         ):
             path = "foreign-pond"
@@ -227,13 +227,13 @@ class Fish(pygame.sprite.Sprite):
 class FishGroup(pygame.sprite.Group):
     def __init__(self):
         super().__init__()
-        # self.fishes['matrix-fish']['113230'] = {Fish1, Fish2, ...}
+        # self.fishes['matrix-pond']['113230'] = {Fish1, Fish2, ...}
         self.fishes: DefaultDict[str, Dict[str, Fish]] = defaultdict(dict)
         self.percentage: Dict[str, float] = {}
         self.limit = consts.FISHES_DISPLAY_LIMIT
         self.last_updated_time = time.time()
 
-        # self.population_history['matrix-fish'] = [(timestamp, count), ...]
+        # self.population_history['matrix-pond'] = [(timestamp, count), ...]
         self.population_history: DefaultDict[str, List[List[tuple]]] = defaultdict(list)
 
     def add_fish(self, fish: Fish):
@@ -301,6 +301,6 @@ class FishGroup(pygame.sprite.Group):
 
     def getFishes(self):
         fishes = []
-        for fish in self.fishes["matrix-fish"].values():
+        for fish in self.fishes["matrix-pond"].values():
             fishes.append(fish)
         return fishes

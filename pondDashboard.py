@@ -87,7 +87,7 @@ class PondDashboard(QMainWindow):
         self.grid = QGridLayout()
         self.graph_button = QPushButton("Graph")
         # self.graph_button.clicked.connect(self.graph)
-        # temp = ["Fish ID: 123", "State: In Pond", "Status: alive", "Genesis: matrix-fish", "Crowd Threshold: 5/10", "Pheromone Level: 4/5", "Lifetime: 30/60"]
+        # temp = ["Fish ID: 123", "State: In Pond", "Status: alive", "Genesis: matrix-pond", "Crowd Threshold: 5/10", "Pheromone Level: 4/5", "Lifetime: 30/60"]
         # print(self.fishe[0].getFishData().getGenesis())
         # num = len(self.fished)
         # num = len(self.ponds)
