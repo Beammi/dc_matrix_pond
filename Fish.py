@@ -13,7 +13,7 @@ from vivisystem.models import VivisystemFish
 POND_ASSETS_PATH = "./assets/images/sprites"
 
 # define list of ponds assets
-available_pond_assets = {"local-pond", "local-pond-agent", "foreign-pond", "mega-pond", "doo-pond"}
+available_pond_assets = {"local-pond", "local-pond-agent", "foreign-pond", "mega-pond", "doo-pond", "khor-pond", "aquagang"}
 agent_path = "local-pond-agent"
 # pond_path: ([left sprites], [right sprites])
 pond_sprites_container = {p: ([], []) for p in available_pond_assets}
@@ -66,7 +66,7 @@ class Fish(pygame.sprite.Sprite):
         self.loadSprite()
 
         self.image = self.sprites[self.current_sprite]
-        self.rect = self.image.get_rect()
+        self.rect: pygame.Rect = self.image.get_rect()
         self.rect.topleft = [self.fishData.x, self.fishData.y]
         self.rect.left = self.fishData.x
         self.rect.top = self.fishData.y
@@ -83,6 +83,7 @@ class Fish(pygame.sprite.Sprite):
         self.speed_x = 2
         self.speed_y = 1
         self.change_dir_timer = random.randint(60, 180)
+        self.add_bullet = None
 
     @classmethod
     def fromVivisystemFish(cls, fish: VivisystemFish):
@@ -124,6 +125,9 @@ class Fish(pygame.sprite.Sprite):
         self.fishData.is_agent = is_agent
         if is_agent:
             self.loadSprite()
+
+    def is_agent(self) -> bool:
+        return self.fishData.is_agent
 
     def flipSprite(self):
 
@@ -167,6 +171,10 @@ class Fish(pygame.sprite.Sprite):
             self.speed_x = random.randint(1, 5) * self.face
             self.speed_y = random.randint(-2, 2)
             self.flipSprite()
+
+        if self.timer >= 10 and (self.fishData.is_agent and self.add_bullet):
+            x = self.rect.x + 5 if self.face == -1 else self.rect.x + 85
+            self.add_bullet(x, self.rect.y + 75, self.face)
 
         if self.rect.left <= 0 or self.rect.right >= SCREEN_WIDTH:
             self.face = -self.face
@@ -223,6 +231,8 @@ class Fish(pygame.sprite.Sprite):
     def shouldMigrate(self) -> bool:
         pass
 
+    def set_add_bullet_func(self, func):
+        self.add_bullet = func
 
 class FishGroup(pygame.sprite.Group):
     def __init__(self):
