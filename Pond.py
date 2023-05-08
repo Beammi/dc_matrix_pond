@@ -47,20 +47,12 @@ class Pill(pygame.sprite.Sprite):
 		self.rect = self.image.get_rect()
 		self.rect.x = x
 		self.rect.y = y
-		self.fallen = False
 
 	def update(self):
-		if not self.fallen:
-			self.rect.y += 5
-			if self.rect.y > 720:
-				self.kill()
-		else:
-			self.rect.x += random.randint(-5, 5)
-			self.rect.y += random.randint(-5, 5)
-
-	def fall(self):
-		self.fallen = True
-
+		self.rect.y += 5
+		if self.rect.y > 720:
+			self.kill()
+	
 class Bullet(pygame.sprite.Sprite):
 	def __init__(self, x, y, direction):
 		super().__init__()
@@ -112,11 +104,6 @@ class Pond:
 	def randomFish(self):
 		key = next(iter(self.fishes))
 		return self.fishes[key]
-
-	# def sharkAttack(self, screen, fish):
-	#     screen.blit(self.sharkImage, (fish.getFishx(), fish.getFishy()))
-	#     self.removeFish(fish)
-	#     fish.die()
 
 	def spawnFish(self, parentFish: Fish = None):
 		tempFish = Fish(100, 100, self.name, parentFish.getId() if parentFish else "-")
